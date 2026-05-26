@@ -1,0 +1,248 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1.5rem 0; }
+.header { margin-bottom: 1.5rem; }
+.badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: var(--color-background-info); color: var(--color-text-info); margin-bottom: 8px; }
+h1 { font-size: 20px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.sub { font-size: 13px; color: var(--color-text-secondary); }
+.stack-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 1rem 0 1.5rem; }
+.pill { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--color-border-tertiary); color: var(--color-text-secondary); background: var(--color-background-secondary); }
+.alert { background: var(--color-background-warning); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px 14px; margin-bottom: 1.5rem; display: flex; gap: 10px; align-items: flex-start; }
+.alert i { color: var(--color-text-warning); font-size: 18px; margin-top: 1px; flex-shrink: 0; }
+.alert-text { font-size: 13px; color: var(--color-text-warning); line-height: 1.5; }
+.alert-text strong { font-weight: 500; }
+.section-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-tertiary); margin-bottom: 10px; }
+.todo-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1.5rem; }
+.todo { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); cursor: pointer; transition: background 0.15s; }
+.todo:hover { background: var(--color-background-secondary); }
+.todo.done { opacity: 0.5; }
+.todo.done .todo-title { text-decoration: line-through; }
+.check { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--color-border-secondary); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.todo.done .check { background: var(--color-background-success); border-color: var(--color-border-success); }
+.todo.done .check i { color: var(--color-text-success); font-size: 12px; }
+.todo-body { flex: 1; }
+.todo-title { font-size: 14px; color: var(--color-text-primary); line-height: 1.4; margin-bottom: 2px; }
+.todo-meta { font-size: 12px; color: var(--color-text-tertiary); }
+.priority { display: inline-block; font-size: 11px; font-weight: 500; padding: 1px 7px; border-radius: 20px; margin-left: 6px; }
+.p-high { background: var(--color-background-danger); color: var(--color-text-danger); }
+.p-med { background: var(--color-background-warning); color: var(--color-text-warning); }
+.p-low { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1.5rem 0; }
+.context-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 1.5rem; }
+.ctx-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.ctx-label { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 4px; }
+.ctx-val { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.progress-bar { height: 4px; background: var(--color-background-tertiary); border-radius: 2px; margin-top: 1rem; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; background: var(--color-background-success); transition: width 0.3s; }
+.progress-label { font-size: 12px; color: var(--color-text-tertiary); margin-top: 6px; }
+</style>
+
+<div class="wrap">
+  <div class="header">
+    <span class="badge">Active project</span>
+    <h1>Truecosmic Academy — Platform improvements</h1>
+    <p class="sub">Spiritual events platform · events.truecosmic.com</p>
+  </div>
+
+  <div class="stack-row">
+    <span class="pill">React + TypeScript</span>
+    <span class="pill">Vite</span>
+    <span class="pill">Node.js + Express</span>
+    <span class="pill">PostgreSQL</span>
+    <span class="pill">Drizzle ORM</span>
+    <span class="pill">Stripe</span>
+    <span class="pill">SparkPost</span>
+    <span class="pill">Zoom</span>
+    <span class="pill">EverWebinar</span>
+    <span class="pill">pnpm monorepo</span>
+  </div>
+
+  <div class="alert">
+    <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+    <div class="alert-text">
+      <strong>Cost review flagged:</strong> EverWebinar (~$500+/yr) is used solely for pre-recorded video delivery. Attendees mostly just watch — no polls, CTAs, or live features are being used. Platform already has registration, booking, email (SparkPost), and payments (Stripe) in place. Replacing EverWebinar with Vimeo Pro (~£180/yr) could save ~$320+/yr and bring video fully in-house.
+    </div>
+  </div>
+
+  <div class="context-grid">
+    <div class="ctx-card">
+      <div class="ctx-label">Video hosting</div>
+      <div class="ctx-val">EverWebinar</div>
+    </div>
+    <div class="ctx-card">
+      <div class="ctx-label">Email</div>
+      <div class="ctx-val">SparkPost</div>
+    </div>
+    <div class="ctx-card">
+      <div class="ctx-label">Payments</div>
+      <div class="ctx-val">Stripe</div>
+    </div>
+    <div class="ctx-card">
+      <div class="ctx-label">Live events</div>
+      <div class="ctx-val">Zoom</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <p class="section-label">Quick wins — do first</p>
+  <div class="todo-list" id="quick">
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Evaluate dropping EverWebinar <span class="priority p-high">high</span></div>
+        <div class="todo-meta">Replace with Vimeo Pro — serve video URL to confirmed registrants via existing booking flow</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Video progress tracking + resume <span class="priority p-high">high</span></div>
+        <div class="todo-meta">Save watch position to DB per user per event — attendees watch in multiple sittings</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Member content vault <span class="priority p-high">high</span></div>
+        <div class="todo-meta">All past recordings accessible in one place for active Stripe members</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Post-watch follow-up emails <span class="priority p-high">high</span></div>
+        <div class="todo-meta">SparkPost trigger on completion — "you finished X, here's what to watch next"</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Watch reminder emails <span class="priority p-med">medium</span></div>
+        <div class="todo-meta">Trigger via SparkPost if user booked but hasn't watched within 48hrs</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Video experience</p>
+  <div class="todo-list">
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Chapters / timestamps <span class="priority p-med">medium</span></div>
+        <div class="todo-meta">Clickable sections within long masterclasses</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Completion certificates <span class="priority p-med">medium</span></div>
+        <div class="todo-meta">Auto-issue on 100% watch completion — great for spiritual education courses</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Closed captions / subtitles <span class="priority p-low">low</span></div>
+        <div class="todo-meta">Upload SRT files alongside video in admin panel</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Monetisation</p>
+  <div class="todo-list">
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Event bundles <span class="priority p-med">medium</span></div>
+        <div class="todo-meta">Sell 3 masterclasses together at a discount via Stripe</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Drip content / scheduled unlocks <span class="priority p-med">medium</span></div>
+        <div class="todo-meta">Unlock videos on a schedule after purchase (Day 1, Day 3, Day 7)</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Gifting <span class="priority p-low">low</span></div>
+        <div class="todo-meta">Buy a recording as a gift for someone else — Stripe supports this</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Affiliate / referral tracking <span class="priority p-low">low</span></div>
+        <div class="todo-meta">Referral links with commission tracked in PostgreSQL</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Community</p>
+  <div class="todo-list">
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Q&A threads per event <span class="priority p-med">medium</span></div>
+        <div class="todo-meta">Attendees post questions, host answers async — builds engagement</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Post-watch feedback / NPS <span class="priority p-med">medium</span></div>
+        <div class="todo-meta">Simple 1–5 rating triggered after completion</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Admin & analytics</p>
+  <div class="todo-list">
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Per-video analytics <span class="priority p-med">medium</span></div>
+        <div class="todo-meta">Drop-off points, average watch time, completion rates in admin panel</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Revenue dashboard <span class="priority p-med">medium</span></div>
+        <div class="todo-meta">MRR, churn, per-event revenue — pulled from Stripe + DB</div>
+      </div>
+    </div>
+    <div class="todo" onclick="toggle(this)">
+      <div class="check"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="todo-body">
+        <div class="todo-title">Attendee CRM view <span class="priority p-low">low</span></div>
+        <div class="todo-meta">See every event a user booked, watched, and paid for</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <div id="progress-section">
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width: 0%"></div></div>
+    <div class="progress-label" id="prog-label">0 of 18 items complete</div>
+  </div>
+</div>
+
+<script>
+function toggle(el) {
+  el.classList.toggle('done');
+  updateProgress();
+}
+function updateProgress() {
+  const all = document.querySelectorAll('.todo');
+  const done = document.querySelectorAll('.todo.done');
+  const pct = Math.round((done.length / all.length) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = done.length + ' of ' + all.length + ' items complete';
+}
+</script>

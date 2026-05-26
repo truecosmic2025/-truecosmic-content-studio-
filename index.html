@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Truecosmic — Content Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0e0c0a;--surface:#181511;--surface2:#201d18;--surface3:#2a2520;
+  --border:rgba(255,220,160,0.08);--border2:rgba(255,220,160,0.16);
+  --gold:#c9a55a;--gold-light:#e8c97e;--gold-dim:rgba(201,165,90,0.13);
+  --text:#f0e8d8;--text2:#9a8e7a;--text3:#5c5448;
+  --success-bg:rgba(90,138,106,0.14);--success:#7ab88a;
+  --error-bg:rgba(138,90,90,0.14);--error:#c87a7a;
+  --info-bg:rgba(74,106,138,0.14);--info:#7aaac8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;line-height:1.6;}
+.app{display:flex;min-height:100vh;}
+
+/* Sidebar */
+.sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:100;}
+.logo{padding:26px 22px 18px;border-bottom:1px solid var(--border);}
+.logo-name{font-family:'DM Serif Display',serif;font-size:17px;color:var(--gold-light);letter-spacing:.02em;}
+.logo-sub{font-size:10px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
+.nav{padding:14px 10px;flex:1;}
+.nav-section{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:14px 10px 5px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .14s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-weight:300;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--gold-dim);color:var(--gold-light);}
+.nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.75;}
+.sidebar-stats{padding:14px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.stat-box{background:var(--surface2);border-radius:8px;padding:10px;}
+.stat-num{font-family:'DM Serif Display',serif;font-size:22px;color:var(--gold-light);}
+.stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:1px;}
+
+/* Main */
+.main{margin-left:260px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.view{display:none;flex-direction:column;flex:1;}
+.view.active{display:flex;}
+
+/* Topbar */
+.topbar{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:10;gap:12px;}
+.page-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);}
+.page-sub{font-size:12px;color:var(--text3);margin-top:1px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;transition:all .14s;font-weight:400;}
+.btn-gold{background:var(--gold);color:#1a1208;font-weight:500;}
+.btn-gold:hover{background:var(--gold-light);}
+.btn-gold:disabled{opacity:.38;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-ghost:disabled{opacity:.38;cursor:not-allowed;}
+.btn-danger{background:var(--error-bg);color:var(--error);border:1px solid rgba(200,122,122,.2);}
+.btn-danger:hover{background:rgba(138,90,90,.25);}
+
+/* Generator layout */
+.gen-body{display:grid;grid-template-columns:340px 1fr;flex:1;min-height:0;overflow:hidden;}
+.gen-input-panel{padding:24px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:18px;overflow-y:auto;}
+.gen-results-panel{overflow-y:auto;}
+
+/* Form elements */
+.field-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;}
+textarea,input[type=text],input[type=email],select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:300;line-height:1.7;padding:10px 13px;transition:border-color .14s;outline:none;appearance:none;}
+textarea{resize:vertical;}
+textarea:focus,input:focus,select:focus{border-color:var(--border2);}
+textarea::placeholder,input::placeholder{color:var(--text3);}
+select option{background:#1a1712;}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:5px;}
+.chip{font-size:12px;padding:4px 11px;border-radius:999px;border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .13s;background:transparent;font-family:'DM Sans',sans-serif;}
+.chip:hover{border-color:var(--border2);color:var(--text);}
+.chip.sel{background:var(--gold-dim);border-color:var(--gold);color:var(--gold-light);}
+
+/* Progress */
+.prog-wrap{background:var(--surface2);border-radius:999px;height:3px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--gold);border-radius:999px;transition:width .4s ease;width:0%;}
+.prog-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:5px;}
+
+/* Results */
+.results-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--text3);text-align:center;padding:48px 24px;}
+.result-item{border-bottom:1px solid var(--border);padding:18px 22px;animation:fadeUp .25s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.result-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.result-url{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:monospace;flex:1;}
+.result-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:999px;flex-shrink:0;}
+.badge-loading{background:var(--info-bg);color:var(--info);}
+.badge-done{background:var(--success-bg);color:var(--success);}
+.badge-error{background:var(--error-bg);color:var(--error);}
+.result-image{width:100%;max-height:200px;object-fit:cover;border-radius:9px;margin-bottom:12px;display:block;}
+.result-post{font-size:13.5px;line-height:1.78;color:var(--text);white-space:pre-wrap;margin-bottom:12px;}
+.link-pill{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:11px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.link-pill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-family:monospace;}
+.result-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.act-btn{font-size:12px;padding:5px 11px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;display:inline-flex;align-items:center;gap:4px;}
+.act-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border2);}
+.act-btn.copied{border-color:var(--success);color:var(--success);}
+.spinner{display:inline-block;width:10px;height:10px;border:1.5px solid rgba(122,170,200,.3);border-top-color:var(--info);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Voice profiles */
+.voices-body{padding:28px 32px;overflow-y:auto;}
+.voice-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:28px;}
+.voice-card{background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:18px;position:relative;transition:border-color .15s;}
+.voice-card:hover{border-color:var(--border2);}
+.voice-card.active-voice{border-color:var(--gold);background:var(--gold-dim);}
+.voice-avatar{width:40px;height:40px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:16px;color:var(--gold-light);margin-bottom:12px;flex-shrink:0;}
+.voice-name{font-size:15px;font-weight:500;color:var(--text);margin-bottom:3px;}
+.voice-desc{font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:10px;}
+.voice-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;}
+.voice-tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--surface3);color:var(--text3);border:1px solid var(--border);}
+.voice-actions{display:flex;gap:7px;}
+
+/* Voice editor */
+.voice-editor{background:var(--surface2);border:1px solid var(--border2);border-radius:13px;padding:22px;margin-bottom:24px;max-width:620px;}
+.voice-editor h3{font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);margin-bottom:16px;}
+.form-row{margin-bottom:14px;}
+.form-hint{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.5;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* Export bar */
+.export-bar{padding:12px 22px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);gap:12px;flex-shrink:0;}
+.export-meta{font-size:12px;color:var(--text3);}
+
+/* Roadmap / howto */
+.info-body{padding:32px 36px;overflow-y:auto;}
+.info-body h2{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);margin-bottom:8px;}
+.info-body .lead{color:var(--text2);font-size:14px;line-height:1.7;max-width:560px;margin-bottom:36px;}
+.phases{display:flex;flex-direction:column;gap:0;position:relative;max-width:660px;}
+.phase-line{position:absolute;left:18px;top:36px;bottom:36px;width:1px;background:linear-gradient(to bottom,var(--gold),transparent);}
+.phase{display:flex;gap:22px;padding-bottom:32px;}
+.phase-dot{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:14px;color:var(--gold-light);flex-shrink:0;position:relative;z-index:1;}
+.phase-dot.now{background:var(--gold-dim);border-color:var(--gold);}
+.phase-content{padding-top:5px;}
+.phase-tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:3px;}
+.phase-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);margin-bottom:5px;}
+.phase-desc{font-size:13px;color:var(--text2);line-height:1.72;margin-bottom:10px;}
+.phase-bullets{display:flex;flex-direction:column;gap:4px;}
+.phase-bullet{font-size:12.5px;color:var(--text2);display:flex;align-items:flex-start;gap:7px;}
+.phase-bullet::before{content:'–';color:var(--text3);flex-shrink:0;}
+.tip-box{background:var(--gold-dim);border:1px solid rgba(201,165,90,.18);border-radius:11px;padding:15px 18px;margin-bottom:14px;max-width:580px;}
+.tip-box h4{font-size:12px;font-weight:500;color:var(--gold-light);margin-bottom:4px;}
+.tip-box p{font-size:13px;color:var(--text2);line-height:1.65;}
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:13px;max-width:760px;margin-bottom:32px;}
+.step-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.step-num{font-family:'DM Serif Display',serif;font-size:34px;color:var(--surface3);line-height:1;margin-bottom:8px;}
+.step-title{font-size:13.5px;font-weight:500;color:var(--text);margin-bottom:5px;}
+.step-desc{font-size:12.5px;color:var(--text2);line-height:1.62;}
+
+/* Voice selector in generator */
+.voice-select-row{display:flex;align-items:center;gap:8px;}
+.voice-dot{width:28px;height:28px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:12px;color:var(--gold-light);flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-name">Truecosmic</div>
+    <div class="logo-sub">Content Studio</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Tools</div>
+    <button class="nav-item active" onclick="showView('generator',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+      Post Generator
+    </button>
+    <div class="nav-section">Team</div>
+    <button class="nav-item" onclick="showView('voices',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+      Voice Profiles
+    </button>
+    <div class="nav-section">Learn</div>
+    <button class="nav-item" onclick="showView('howto',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+      How To Use
+    </button>
+    <button class="nav-item" onclick="showView('roadmap',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+      Automation Roadmap
+    </button>
+  </nav>
+  <div class="sidebar-stats">
+    <div class="stat-box"><div class="stat-num" id="stat-gen">0</div><div class="stat-label">Generated</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-ready">0</div><div class="stat-label">Ready</div></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ═══ GENERATOR VIEW ═══ -->
+  <div class="view active" id="view-generator">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Post Generator</div>
+        <div class="page-sub">Reads each article, pulls the header image, writes the post in your voice</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="clearGen()">Clear</button>
+        <button class="btn btn-gold" id="genBtn" onclick="startGen()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+          Generate posts
+        </button>
+      </div>
+    </div>
+
+    <div class="gen-body" style="flex:1;overflow:hidden;">
+      <!-- Input panel -->
+      <div class="gen-input-panel">
+
+        <div>
+          <div class="field-label">Voice / Team member</div>
+          <div class="voice-select-row">
+            <div class="voice-dot" id="voiceDot">?</div>
+            <select id="voiceSelect" onchange="onVoiceChange()" style="flex:1;">
+              <option value="">— Select a voice —</option>
+            </select>
+          </div>
+          <div class="form-hint" style="margin-top:6px;">Don't have one yet? <a href="#" onclick="showView('voices',null);return false;" style="color:var(--gold);text-decoration:none;">Create a voice profile →</a></div>
+        </div>
+
+        <div>
+          <div class="field-label">Article URLs <span id="urlCount" style="color:var(--text3);font-size:10px;text-transform:none;letter-spacing:0;margin-left:6px;"></span></div>
+          <textarea id="urlInput" rows="9" placeholder="https://truecosmic.com/manifesting-love&#10;https://truecosmic.com/he-misses-you&#10;https://truecosmic.com/letting-go&#10;&#10;One URL per line..." oninput="countUrls()"></textarea>
+        </div>
+
+        <div>
+          <div class="field-label">Post length</div>
+          <div class="chips">
+            <div class="chip" data-len="short">Short (80–100 words)</div>
+            <div class="chip sel" data-len="medium">Medium (150–200 words)</div>
+            <div class="chip" data-len="long">Long (250–300 words)</div>
+          </div>
+        </div>
+
+        <div id="progSection" style="display:none;">
+          <div class="field-label">Progress</div>
+          <div class="prog-wrap"><div class="prog-fill" id="progFill"></div></div>
+          <div class="prog-meta"><span id="progText">Starting...</span><span id="progCount"></span></div>
+        </div>
+
+      </div>
+
+      <!-- Results panel -->
+      <div class="gen-results-panel" id="resultsPanel">
+        <div class="results-empty" id="emptyState">
+          <svg width="44" height="44" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="opacity:.18;"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          <p style="font-size:13.5px;">Generated posts will appear here</p>
+          <p style="font-size:12px;">Select a voice, paste URLs, then hit Generate</p>
+        </div>
+        <div id="resultsList"></div>
+      </div>
+    </div>
+
+    <div class="export-bar" id="exportBar" style="display:none;">
+      <div class="export-meta" id="exportMeta"></div>
+      <div style="display:flex;gap:7px;">
+        <button class="btn btn-ghost" onclick="copyAll()">Copy all posts</button>
+        <button class="btn btn-gold" onclick="exportCSV()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VOICES VIEW ═══ -->
+  <div class="view" id="view-voices">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Voice Profiles</div>
+        <div class="page-sub">Each team member gets their own voice — language, slang, style, all saved</div>
+      </div>
+      <button class="btn btn-gold" onclick="openEditor(null)">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        New voice
+      </button>
+    </div>
+    <div class="voices-body">
+
+      <!-- Editor -->
+      <div class="voice-editor" id="voiceEditor" style="display:none;">
+        <h3 id="editorTitle">New voice profile</h3>
+        <input type="hidden" id="editId">
+
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="field-label">Name</div>
+            <input type="text" id="eName" placeholder="e.g. Lauren">
+          </div>
+          <div class="form-row">
+            <div class="field-label">Initials (for avatar)</div>
+            <input type="text" id="eInitials" maxlength="2" placeholder="LL" style="text-transform:uppercase;">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-label">Writing style — describe how you write</div>
+          <textarea id="eStyle" rows="3" placeholder="Down to earth. Real. Speaks like a friend, not a guru. Short sentences. Doesn't dress things up. Calls things what they are."></textarea>
+          <div class="form-hint">Be specific. This is what the AI uses to match your voice.</div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-label">Example phrases you'd actually use</div>
+          <textarea id="eExamples" rows="4" placeholder="You're not broken, you're just tired of pretending it's fine.&#10;Stop waiting for him to choose you. He's already shown you who he is.&#10;It's not your job to make someone love you right."></textarea>
+          <div class="form-hint">One per line. The more examples, the better the AI captures your voice.</div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="field-label">Words / slang you use freely</div>
+            <textarea id="eGoodWords" rows="3" placeholder="piss, shit, bloody, reckon, proper, nah, yeah, honestly, mate"></textarea>
+            <div class="form-hint">Comma separated. The AI won't shy away from these.</div>
+          </div>
+          <div class="form-row">
+            <div class="field-label">Words to never use</div>
+            <textarea id="eBadWords" rows="3" placeholder="universe, vibration, alignment, journey, manifest (overused), souls"></textarea>
+            <div class="form-hint">Comma separated. These will be avoided.</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-label">Anything else the AI should know</div>
+          <textarea id="eNotes" rows="2" placeholder="Never preachy. Never ends with a question. Always speaks to someone who's been hurt."></textarea>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn btn-gold" onclick="saveVoice()">Save voice</button>
+          <button class="btn btn-ghost" onclick="closeEditor()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Voice cards -->
+      <div class="voice-grid" id="voiceGrid"></div>
+      <div id="noVoices" style="color:var(--text3);font-size:13px;display:none;">No voice profiles yet. Create your first one above.</div>
+    </div>
+  </div>
+
+  <!-- ═══ HOW TO USE VIEW ═══ -->
+  <div class="view" id="view-howto">
+    <div class="topbar">
+      <div><div class="page-title">How Your Team Uses This</div><div class="page-sub">A simple daily workflow</div></div>
+    </div>
+    <div class="info-body">
+      <h2>Simple daily workflow</h2>
+      <p class="lead">The AI does the writing. Your team does the reviewing. What used to take hours now takes minutes for a week's worth of content.</p>
+      <div class="steps-grid">
+        <div class="step-card"><div class="step-num">01</div><div class="step-title">Set up your voice</div><div class="step-desc">Each team member creates their Voice Profile once — describing how they write, the words they use, slang they're comfortable with, and phrases to avoid.</div></div>
+        <div class="step-card"><div class="step-num">02</div><div class="step-title">Paste article URLs</div><div class="step-desc">Collect this week's article URLs from Truecosmic.com. Paste them all at once, one per line. The tool handles the rest.</div></div>
+        <div class="step-card"><div class="step-num">03</div><div class="step-title">Generate & review</div><div class="step-desc">Hit Generate. The AI reads each article, grabs the header image, and writes a post in your exact voice. Review each one and tweak if needed.</div></div>
+        <div class="step-card"><div class="step-num">04</div><div class="step-title">Schedule & comment</div><div class="step-desc">Copy the post body into Facebook. Schedule it natively in the group. The moment it publishes, paste the article link as the very first comment.</div></div>
+      </div>
+      <div class="tip-box"><h4>Why link in comments?</h4><p>Facebook's algorithm actively suppresses posts with external links in the body. Putting the link as the first comment bypasses this and protects your reach. This is the single most important thing your team does.</p></div>
+      <div class="tip-box"><h4>Image tip</h4><p>The tool pulls the article's header image automatically. When you post in Facebook, attach this image to the post body — images with no link in the post body get boosted reach.</p></div>
+      <div class="tip-box"><h4>Post frequency</h4><p>Even with a 95k group, 1–2 posts per day is the sweet spot. More than that and Facebook starts throttling the group's organic reach. Spread your 100+ articles over weeks, not days.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══ ROADMAP VIEW ═══ -->
+  <div class="view" id="view-roadmap">
+    <div class="topbar">
+      <div><div class="page-title">Automation Roadmap</div><div class="page-sub">From manual to fully automated — phase by phase</div></div>
+    </div>
+    <div class="info-body">
+      <h2>From here to hands-off</h2>
+      <p class="lead">Right now your team reviews everything before it goes live. Here's the realistic path to having this run entirely on its own.</p>
+      <div class="phases">
+        <div class="phase-line"></div>
+        <div class="phase">
+          <div class="phase-dot now">1</div>
+          <div class="phase-content">
+            <div class="phase-tag">Now — Active</div>
+            <div class="phase-title">AI-assisted drafting</div>
+            <div class="phase-desc">Your team uses this tool. The AI reads articles, grabs the image, writes the post in the right voice. Team reviews and schedules manually inside Facebook.</div>
+            <div class="phase-bullets">
+              <div class="phase-bullet">Paste URLs → AI reads articles → posts + images generated</div>
+              <div class="phase-bullet">Per-person voice profiles keep each post sounding authentic</div>
+              <div class="phase-bullet">Export CSV for batch scheduling</div>
+            </div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-dot">2</div>
+          <div class="phase-content">
+            <div class="phase-tag">Next — 1 to 2 months</div>
+            <div class="phase-title">Automated content pipeline</div>
+            <div class="phase-desc">New articles on Truecosmic.com automatically trigger post generation. Team wakes up to a queue of ready-to-approve posts in a shared Google Sheet or Notion board.</div>
+            <div class="phase-bullets">
+              <div class="phase-bullet">RSS feed or CMS webhook fires on every new article</div>
+              <div class="phase-bullet">Posts routed to the right team member's voice automatically</div>
+              <div class="phase-bullet">One-click approve before anything goes live</div>
+            </div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-dot">3</div>
+          <div class="phase-content">
+            <div class="phase-tag">Medium term — 3 to 6 months</div>
+            <div class="phase-title">Smart scheduling</div>
+            <div class="phase-desc">Posts scheduled automatically at the best times based on your group's engagement data. Performance data feeds back in to improve hooks and tone over time.</div>
+            <div class="phase-bullets">
+              <div class="phase-bullet">Best posting times calculated per day of week</div>
+              <div class="phase-bullet">Top-performing styles weighted higher in generation</div>
+              <div class="phase-bullet">Monthly report generated automatically</div>
+            </div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-dot">4</div>
+          <div class="phase-content">
+            <div class="phase-tag">Future — 6 to 12 months</div>
+            <div class="phase-title">Fully hands-off</div>
+            <div class="phase-desc">Article published → post generated → AI quality check → scheduled → posted → link added as first comment. Human oversight only when something flags for review.</div>
+            <div class="phase-bullets">
+              <div class="phase-bullet">AI quality gate replaces manual review for standard posts</div>
+              <div class="phase-bullet">Automatic link-in-comment via Facebook Graph API</div>
+              <div class="phase-bullet">Extends to Instagram, email newsletter, and Pinterest</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────
+let voices = JSON.parse(localStorage.getItem('tc_voices') || '[]');
+let selectedLen = 'medium';
+let allResults = [];
+let isRunning = false;
+
+// ─── LENGTH CHIPS ────────────────────────────────────────────────────────
+document.querySelectorAll('[data-len]').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('[data-len]').forEach(x => x.classList.remove('sel'));
+    c.classList.add('sel');
+    selectedLen = c.dataset.len;
+  });
+});
+
+// ─── NAV ─────────────────────────────────────────────────────────────────
+function showView(name, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name === 'voices') renderVoiceGrid();
+  if (name === 'generator') populateVoiceSelect();
+}
+
+// ─── VOICE PROFILES ───────────────────────────────────────────────────────
+function saveVoices() { localStorage.setItem('tc_voices', JSON.stringify(voices)); }
+
+function openEditor(id) {
+  const ed = document.getElementById('voiceEditor');
+  ed.style.display = 'block';
+  if (id) {
+    const v = voices.find(x => x.id === id);
+    document.getElementById('editorTitle').textContent = 'Edit voice profile';
+    document.getElementById('editId').value = id;
+    document.getElementById('eName').value = v.name;
+    document.getElementById('eInitials').value = v.initials;
+    document.getElementById('eStyle').value = v.style;
+    document.getElementById('eExamples').value = v.examples;
+    document.getElementById('eGoodWords').value = v.goodWords;
+    document.getElementById('eBadWords').value = v.badWords;
+    document.getElementById('eNotes').value = v.notes;
+  } else {
+    document.getElementById('editorTitle').textContent = 'New voice profile';
+    document.getElementById('editId').value = '';
+    ['eName','eInitials','eStyle','eExamples','eGoodWords','eBadWords','eNotes'].forEach(id => document.getElementById(id).value = '');
+  }
+  ed.scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeEditor() { document.getElementById('voiceEditor').style.display = 'none'; }
+
+function saveVoice() {
+  const name = document.getElementById('eName').value.trim();
+  if (!name) { alert('Please enter a name.'); return; }
+  const v = {
+    id: document.getElementById('editId').value || Date.now().toString(36),
+    name,
+    initials: document.getElementById('eInitials').value.trim().toUpperCase() || name.slice(0,2).toUpperCase(),
+    style: document.getElementById('eStyle').value.trim(),
+    examples: document.getElementById('eExamples').value.trim(),
+    goodWords: document.getElementById('eGoodWords').value.trim(),
+    badWords: document.getElementById('eBadWords').value.trim(),
+    notes: document.getElementById('eNotes').value.trim(),
+  };
+  const idx = voices.findIndex(x => x.id === v.id);
+  if (idx > -1) voices[idx] = v; else voices.push(v);
+  saveVoices();
+  closeEditor();
+  renderVoiceGrid();
+  populateVoiceSelect();
+}
+
+function deleteVoice(id) {
+  if (!confirm('Delete this voice profile?')) return;
+  voices = voices.filter(v => v.id !== id);
+  saveVoices();
+  renderVoiceGrid();
+  populateVoiceSelect();
+}
+
+function renderVoiceGrid() {
+  const grid = document.getElementById('voiceGrid');
+  const none = document.getElementById('noVoices');
+  if (!voices.length) { grid.innerHTML = ''; none.style.display = 'block'; return; }
+  none.style.display = 'none';
+  grid.innerHTML = voices.map(v => `
+    <div class="voice-card" id="vc-${v.id}">
+      <div class="voice-avatar">${v.initials}</div>
+      <div class="voice-name">${v.name}</div>
+      <div class="voice-desc">${v.style ? v.style.slice(0,100) + (v.style.length > 100 ? '…' : '') : 'No style description yet.'}</div>
+      ${v.goodWords ? `<div class="voice-tags">${v.goodWords.split(',').slice(0,5).map(w=>`<span class="voice-tag">${w.trim()}</span>`).join('')}</div>` : ''}
+      <div class="voice-actions">
+        <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;" onclick="openEditor('${v.id}')">Edit</button>
+        <button class="btn btn-danger" style="font-size:12px;padding:5px 12px;" onclick="deleteVoice('${v.id}')">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+function populateVoiceSelect() {
+  const sel = document.getElementById('voiceSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Select a voice —</option>' +
+    voices.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+  if (cur && voices.find(v => v.id === cur)) sel.value = cur;
+  onVoiceChange();
+}
+
+function onVoiceChange() {
+  const id = document.getElementById('voiceSelect').value;
+  const v = voices.find(x => x.id === id);
+  const dot = document.getElementById('voiceDot');
+  dot.textContent = v ? v.initials : '?';
+}
+
+// ─── URL COUNT ────────────────────────────────────────────────────────────
+function countUrls() {
+  const urls = getUrls();
+  const el = document.getElementById('urlCount');
+  el.textContent = urls.length ? `${urls.length} URL${urls.length > 1 ? 's' : ''}` : '';
+}
+
+function getUrls() {
+  return document.getElementById('urlInput').value.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+}
+
+// ─── GENERATE ─────────────────────────────────────────────────────────────
+async function startGen() {
+  if (isRunning) return;
+  const voiceId = document.getElementById('voiceSelect').value;
+  if (!voiceId) { alert('Please select a voice profile first.'); showView('voices', null); return; }
+  const urls = getUrls();
+  if (!urls.length) { alert('Please paste at least one URL.'); return; }
+
+  const voice = voices.find(v => v.id === voiceId);
+  isRunning = true;
+  allResults = [];
+  document.getElementById('resultsList').innerHTML = '';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('exportBar').style.display = 'none';
+  document.getElementById('progSection').style.display = 'block';
+  document.getElementById('genBtn').disabled = true;
+
+  let done = 0, ready = 0;
+
+  for (let i = 0; i < urls.length; i++) {
+    const url = urls[i];
+    setProgress(i, urls.length, `Reading article ${i + 1} of ${urls.length}…`);
+    const cardId = 'r' + i;
+    addCard(cardId, url);
+    try {
+      const { text, imageUrl } = await fetchArticle(url);
+      setCardStatus(cardId, 'generating');
+      const post = await generatePost(text, voice);
+      doneCard(cardId, url, post, imageUrl);
+      allResults.push({ url, post, imageUrl, error: null });
+      ready++;
+    } catch (e) {
+      errorCard(cardId, url, e.message || 'Failed');
+      allResults.push({ url, post: null, error: e.message });
+    }
+    done++;
+    updateStats(done, ready);
+  }
+
+  setProgress(urls.length, urls.length, 'Complete');
+  document.getElementById('genBtn').disabled = false;
+  isRunning = false;
+  if (allResults.some(r => r.post)) {
+    document.getElementById('exportBar').style.display = 'flex';
+    document.getElementById('exportMeta').textContent = `${ready} post${ready !== 1 ? 's' : ''} ready`;
+  }
+}
+
+function setProgress(done, total, text) {
+  document.getElementById('progFill').style.width = (total ? Math.round((done / total) * 100) : 0) + '%';
+  document.getElementById('progText').textContent = text;
+  document.getElementById('progCount').textContent = `${done}/${total}`;
+}
+
+// ─── ARTICLE FETCH (text + image) ─────────────────────────────────────────
+async function fetchArticle(url) {
+  const res = await fetch('/api/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      messages: [{
+        role: 'user',
+        content: `Fetch this article and return ONLY a JSON object with two fields:
+1. "text": the full article body as plain text
+2. "imageUrl": the og:image or first large header image URL from the page (full absolute URL, or null if none found)
+
+URL: ${url}
+
+Return ONLY the JSON. No explanation, no markdown, no backticks.`
+      }]
+    })
+  });
+  const data = await res.json();
+  const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
+  try {
+    const clean = raw.replace(/^```[a-z]*\n?/, '').replace(/```$/, '').trim();
+    const parsed = JSON.parse(clean);
+    if (!parsed.text || parsed.text.length < 60) throw new Error('Article too short');
+    return { text: parsed.text, imageUrl: parsed.imageUrl || null };
+  } catch {
+    if (raw.length > 80) return { text: raw, imageUrl: null };
+    throw new Error('Could not read article');
+  }
+}
+
+// ─── POST GENERATION ──────────────────────────────────────────────────────
+const LENGTH_MAP = {
+  short: 'Write 2 short paragraphs, 80 to 100 words maximum.',
+  medium: 'Write 3 to 4 paragraphs, 150 to 200 words.',
+  long: 'Write 4 to 5 paragraphs, 250 to 300 words.'
+};
+
+function buildSystemPrompt(voice) {
+  let prompt = `You write Facebook posts for Truecosmic.com, a spiritual growth and manifestation private Facebook group with 95,000 members.\n\n`;
+  prompt += `You are writing in the voice of ${voice.name}.\n\n`;
+  if (voice.style) prompt += `THEIR WRITING STYLE:\n${voice.style}\n\n`;
+  if (voice.examples) prompt += `EXAMPLE PHRASES THEY ACTUALLY USE:\n${voice.examples}\n\n`;
+  if (voice.goodWords) prompt += `WORDS AND SLANG THEY USE FREELY (use these naturally, don't shy away):\n${voice.goodWords}\n\n`;
+  if (voice.badWords) prompt += `WORDS TO NEVER USE:\n${voice.badWords}\n\n`;
+  if (voice.notes) prompt += `ADDITIONAL NOTES:\n${voice.notes}\n\n`;
+  prompt += `FORMAT RULES:
+- Hook the reader in the very first sentence — a truth they feel in their chest, or a question that stops them mid-scroll
+- No hashtags, no emojis
+- Do NOT include any URL in the post body — the link goes in the first comment
+- End with a soft, natural call to action directing people to the link in the comments
+- Never sound like AI. Never sound like a brand. Sound like ${voice.name}.
+- Respond ONLY with the post text. Nothing else.`;
+  return prompt;
+}
+
+async function generatePost(articleText, voice) {
+  const system = buildSystemPrompt(voice);
+  const lengthNote = LENGTH_MAP[selectedLen];
+  const res = await fetch('/api/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system,
+      messages: [{
+        role: 'user',
+        content: `${lengthNote}\n\nWrite the Facebook post based on this article:\n\n${articleText.slice(0, 3500)}`
+      }]
+    })
+  });
+  const data = await res.json();
+  const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
+  if (!text) throw new Error('No post generated');
+  return text;
+}
+
+// ─── RESULT CARDS ──────────────────────────────────────────────────────────
+function addCard(id, url) {
+  const list = document.getElementById('resultsList');
+  const el = document.createElement('div');
+  el.className = 'result-item';
+  el.id = id;
+  el.innerHTML = `
+    <div class="result-meta">
+      <span class="result-url">${url}</span>
+      <span class="result-badge badge-loading"><span class="spinner"></span> Reading…</span>
+    </div>
+    <p style="font-size:12px;color:var(--text3);">Fetching article and image…</p>`;
+  list.appendChild(el);
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function setCardStatus(id, status) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const badge = el.querySelector('.result-badge');
+  if (badge) { badge.className = 'result-badge badge-loading'; badge.innerHTML = '<span class="spinner"></span> Writing post…'; }
+}
+
+function doneCard(id, url, post, imageUrl) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const safePost = post.replace(/\\/g,'\\\\').replace(/`/g,'\\`');
+  const safeUrl = url.replace(/'/g,"\\'");
+  const imgHtml = imageUrl ? `<img class="result-image" src="${imageUrl}" alt="Article header image" onerror="this.style.display='none'">` : '';
+  const safePostDisplay = post.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  el.innerHTML = `
+    <div class="result-meta">
+      <span class="result-url">${url}</span>
+      <span class="result-badge badge-done">✓ Ready</span>
+    </div>
+    ${imgHtml}
+    <div class="link-pill"><span>${url}</span><button class="act-btn" onclick="doCopy(this,'${safeUrl}')">Copy link</button></div>
+    <div class="result-post">${safePostDisplay}</div>
+    <div class="result-actions">
+      <button class="act-btn" onclick="doCopy(this,\`${safePost}\`)">Copy post</button>
+      ${imageUrl ? `<button class="act-btn" onclick="doCopy(this,'${imageUrl.replace(/'/g,"\\'")}')">Copy image URL</button>` : ''}
+    </div>`;
+}
+
+function errorCard(id, url, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="result-meta">
+      <span class="result-url">${url}</span>
+      <span class="result-badge badge-error">✕ Error</span>
+    </div>
+    <p style="font-size:12px;color:var(--error);">${msg}</p>`;
+}
+
+function doCopy(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+// ─── EXPORT ────────────────────────────────────────────────────────────────
+function copyAll() {
+  const t = allResults.filter(r => r.post)
+    .map(r => `POST:\n${r.post}\n\nLINK FOR FIRST COMMENT:\n${r.url}${r.imageUrl ? '\n\nHEADER IMAGE:\n' + r.imageUrl : ''}`)
+    .join('\n\n────────────────────────\n\n');
+  navigator.clipboard.writeText(t);
+}
+
+function exportCSV() {
+  const rows = [['Article URL','Post Body','Link for Comment','Header Image URL']];
+  allResults.filter(r => r.post).forEach(r => {
+    rows.push([r.url, r.post.replace(/"/g,'""'), r.url, r.imageUrl || '']);
+  });
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = 'truecosmic_posts_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+function clearGen() {
+  if (isRunning) return;
+  document.getElementById('urlInput').value = '';
+  document.getElementById('resultsList').innerHTML = '';
+  document.getElementById('emptyState').style.display = 'flex';
+  document.getElementById('exportBar').style.display = 'none';
+  document.getElementById('progSection').style.display = 'none';
+  allResults = [];
+  updateStats(0, 0);
+  countUrls();
+}
+
+function updateStats(gen, ready) {
+  document.getElementById('stat-gen').textContent = gen;
+  document.getElementById('stat-ready').textContent = ready;
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+populateVoiceSelect();
+renderVoiceGrid();
+</script>
+</body>
+</html>
