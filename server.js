@@ -1,16 +1,18 @@
 const express = require('express');
 const path = require('path');
-const crypto = require('crypto');  
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-// Sessions stored in memory — cleared on restart (users just log in again)
-const sessions = new Map();
+// Use ANTHROPIC_API_KEY as signing secret so no extra env var needed
+function getSecret() {
+  return ANTHROPIC_API_KEY || 'fallback-secret-change-me';
+}
 
 // Parse team users from env var
-// Format in Railway: TEAM_USERS=lauren:pass123,sarah:pass456,mike:pass789
+// Format: TEAM_USERS=lauren:pass123,sarah:pass456
 function getUsers() {
   const raw = process.env.TEAM_USERS || '';
   const users = {};
@@ -19,6 +21,19 @@ function getUsers() {
     if (username && password) users[username.toLowerCase()] = password;
   });
   return users;
+}
+
+// Generate a persistent token — survives server restarts
+function makeToken(username) {
+  const payload = `${username}:${getSecret()}`;
+  return crypto.createHmac('sha256', getSecret()).update(payload).digest('hex');
+}
+
+// Verify token without any stored state
+function verifyToken(token, username) {
+  if (!token || !username) return false;
+  const expected = makeToken(username);
+  return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
 }
 
 app.use(express.json({ limit: '10mb' }));
@@ -36,31 +51,36 @@ app.post('/api/login', (req, res) => {
     return res.status(401).json({ error: 'Invalid username or password.' });
   }
 
-  const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, { username: username.toLowerCase(), createdAt: Date.now() });
+  const token = makeToken(username.toLowerCase());
   res.json({ token, username: username.toLowerCase() });
 });
 
 // ── LOGOUT ───────────────────────────────────────────────────────────────────
 app.post('/api/logout', (req, res) => {
-  const token = req.headers['x-session-token'];
-  if (token) sessions.delete(token);
+  // Client clears localStorage — nothing to do server-side with stateless tokens
   res.json({ ok: true });
 });
 
 // ── AUTH MIDDLEWARE ───────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
   const token = req.headers['x-session-token'];
-  if (!token || !sessions.has(token)) {
+  const username = req.headers['x-username'];
+
+  if (!token || !username) {
     return res.status(401).json({ error: 'Not authenticated.' });
   }
-  // Expire sessions after 12 hours
-  const session = sessions.get(token);
-  if (Date.now() - session.createdAt > 12 * 60 * 60 * 1000) {
-    sessions.delete(token);
-    return res.status(401).json({ error: 'Session expired. Please log in again.' });
+
+  if (!verifyToken(token, username)) {
+    return res.status(401).json({ error: 'Invalid session. Please log in again.' });
   }
-  req.session = session;
+
+  // Verify user still exists in TEAM_USERS
+  const users = getUsers();
+  if (!users[username.toLowerCase()]) {
+    return res.status(401).json({ error: 'Account not found. Please contact your admin.' });
+  }
+
+  req.username = username;
   next();
 }
 
@@ -96,5 +116,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   const users = getUsers();
   console.log(`Truecosmic Content Studio running on port ${PORT}`);
-  console.log(`Team members configured: ${Object.keys(users).join(', ') || 'NONE — set TEAM_USERS env var'}`);
+  console.log(`Team members: ${Object.keys(users).join(', ') || 'NONE — set TEAM_USERS env var'}`);
 });
