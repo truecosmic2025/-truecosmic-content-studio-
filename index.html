@@ -602,9 +602,7 @@ async function startGen() {
     const cardId = 'r' + i;
     addCard(cardId, url);
     try {
-      const { text, imageUrl } = await fetchArticle(url);
-      setCardStatus(cardId, 'generating');
-      const post = await generatePost(text, voice);
+      const { post, imageUrl } = await fetchAndGenerate(url, voice);
       doneCard(cardId, url, post, imageUrl);
       allResults.push({ url, post, imageUrl, error: null });
       ready++;
@@ -614,6 +612,7 @@ async function startGen() {
     }
     done++;
     updateStats(done, ready);
+    if (i < urls.length - 1) await new Promise(r => setTimeout(r, 2000));
   }
 
   setProgress(urls.length, urls.length, 'Complete');
@@ -631,41 +630,10 @@ function setProgress(done, total, text) {
   document.getElementById('progCount').textContent = `${done}/${total}`;
 }
 
-// ─── ARTICLE FETCH (text + image) ─────────────────────────────────────────
+// ─── FETCH ARTICLE + GENERATE POST IN ONE CALL ────────────────────────────
 async function fetchArticle(url) {
-  const res = await fetch('/api/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 1000,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{
-        role: 'user',
-        content: `Fetch this article and return ONLY a JSON object with two fields:
-1. "text": the full article body as plain text
-2. "imageUrl": the og:image or first large header image URL from the page (full absolute URL, or null if none found)
-
-URL: ${url}
-
-Return ONLY the JSON. No explanation, no markdown, no backticks.`
-      }]
-    })
-  });
-  const data = await res.json();
-  if (!data.content || !Array.isArray(data.content)) {
-    throw new Error(data.error?.message || data.error || 'API error — check your Anthropic key');
-  }
-  const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
-  try {
-    const clean = raw.replace(/^```[a-z]*\n?/, '').replace(/```$/, '').trim();
-    const parsed = JSON.parse(clean);
-    if (!parsed.text || parsed.text.length < 60) throw new Error('Article too short');
-    return { text: parsed.text, imageUrl: parsed.imageUrl || null };
-  } catch {
-    if (raw.length > 80) return { text: raw, imageUrl: null };
-    throw new Error('Could not read article content');
-  }
+  // Just return the URL — actual fetch+generate happens in one combined call
+  return { url };
 }
 
 // ─── POST GENERATION ──────────────────────────────────────────────────────
@@ -702,19 +670,32 @@ prompt += `FORMAT RULES:
   return prompt;
 }
 
-async function generatePost(articleText, voice) {
+async function fetchAndGenerate(url, voice) {
   const system = buildSystemPrompt(voice);
   const lengthNote = LENGTH_MAP[selectedLen];
+  // Single API call: web search fetches the article, then writes the post
   const res = await fetch('/api/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-5',
-      max_tokens: 1000,
+      max_tokens: 1500,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       system,
       messages: [{
         role: 'user',
-        content: `${lengthNote}\n\nWrite the Facebook post based on this article:\n\n${articleText.slice(0, 3500)}`
+        content: `Please fetch the article at this URL and write a Facebook post based on it.
+
+URL: ${url}
+
+${lengthNote}
+
+Also, before writing the post, look for the og:image or main header image URL on the page.
+
+Return your response in this exact format:
+IMAGE: [full image URL or NONE]
+POST:
+[the Facebook post text]`
       }]
     })
   });
@@ -722,9 +703,22 @@ async function generatePost(articleText, voice) {
   if (!data.content || !Array.isArray(data.content)) {
     throw new Error(data.error?.message || data.error || 'API error — check your Anthropic key');
   }
-  const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
-  if (!text) throw new Error('No post generated');
-  return text;
+  const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
+  if (!raw) throw new Error('No response generated');
+
+  // Parse image and post from response
+  let imageUrl = null;
+  let post = raw;
+  const imageMatch = raw.match(/^IMAGE:\s*(.+?)\n/);
+  if (imageMatch && imageMatch[1].trim() !== 'NONE') {
+    imageUrl = imageMatch[1].trim();
+  }
+  const postMatch = raw.match(/POST:\n([\s\S]+)$/);
+  if (postMatch) {
+    post = postMatch[1].trim();
+  }
+  if (!post || post.length < 20) throw new Error('Post generation failed');
+  return { post, imageUrl };
 }
 
 // ─── RESULT CARDS ──────────────────────────────────────────────────────────
