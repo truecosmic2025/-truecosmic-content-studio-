@@ -828,3 +828,145 @@ renderVoiceGrid();
 </script>
 </body>
 </html>
+
+<script>
+// ─── AUTH LAYER ───────────────────────────────────────────────────────────────
+(function() {
+  const LOGIN_HTML = `
+  <div id="loginOverlay" style="
+    position:fixed;inset:0;background:#0e0c0a;display:flex;align-items:center;
+    justify-content:center;z-index:9999;font-family:'DM Sans',sans-serif;
+  ">
+    <div style="
+      background:#181511;border:1px solid rgba(255,220,160,0.12);border-radius:16px;
+      padding:40px;width:100%;max-width:380px;text-align:center;
+    ">
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#e8c97e;margin-bottom:4px;">Truecosmic</div>
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5c5448;margin-bottom:32px;">Content Studio</div>
+
+      <div id="loginError" style="
+        background:rgba(138,90,90,0.14);border:1px solid rgba(200,122,122,.2);
+        border-radius:8px;padding:10px;font-size:13px;color:#c87a7a;
+        margin-bottom:16px;display:none;
+      "></div>
+
+      <input id="loginUser" type="text" placeholder="Username" autocomplete="username" style="
+        width:100%;background:#201d18;border:1px solid rgba(255,220,160,0.08);
+        border-radius:9px;color:#f0e8d8;font-family:'DM Sans',sans-serif;
+        font-size:14px;padding:11px 14px;outline:none;margin-bottom:10px;
+        box-sizing:border-box;
+      ">
+      <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password" style="
+        width:100%;background:#201d18;border:1px solid rgba(255,220,160,0.08);
+        border-radius:9px;color:#f0e8d8;font-family:'DM Sans',sans-serif;
+        font-size:14px;padding:11px 14px;outline:none;margin-bottom:20px;
+        box-sizing:border-box;
+      ">
+      <button id="loginBtn" onclick="doLogin()" style="
+        width:100%;background:#c9a55a;color:#1a1208;border:none;border-radius:9px;
+        font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+        padding:12px;cursor:pointer;
+      ">Sign in</button>
+      <div style="font-size:11px;color:#5c5448;margin-top:20px;">
+        Access restricted to team members only
+      </div>
+    </div>
+  </div>`;
+
+  // Check if already logged in
+  const token = localStorage.getItem('tc_token');
+  const username = localStorage.getItem('tc_username');
+
+  if (!token) {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.insertAdjacentHTML('beforeend', LOGIN_HTML);
+      document.getElementById('loginPass').addEventListener('keydown', e => {
+        if (e.key === 'Enter') doLogin();
+      });
+    });
+  } else {
+    // Add session token to all API calls
+    patchFetch(token);
+    document.addEventListener('DOMContentLoaded', () => addLogoutButton(username));
+  }
+
+  window.doLogin = async function() {
+    const btn = document.getElementById('loginBtn');
+    const errEl = document.getElementById('loginError');
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value;
+
+    if (!user || !pass) { showErr('Please enter your username and password.'); return; }
+
+    btn.textContent = 'Signing in…';
+    btn.disabled = true;
+    errEl.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+      });
+      const data = await res.json();
+      if (!res.ok) { showErr(data.error || 'Login failed.'); btn.textContent = 'Sign in'; btn.disabled = false; return; }
+
+      localStorage.setItem('tc_token', data.token);
+      localStorage.setItem('tc_username', data.username);
+      patchFetch(data.token);
+      document.getElementById('loginOverlay').remove();
+      addLogoutButton(data.username);
+    } catch(e) {
+      showErr('Could not connect to server.');
+      btn.textContent = 'Sign in';
+      btn.disabled = false;
+    }
+  };
+
+  function showErr(msg) {
+    const el = document.getElementById('loginError');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+  }
+
+  function patchFetch(token) {
+    const origFetch = window.fetch;
+    window.fetch = function(url, opts = {}) {
+      if (typeof url === 'string' && url.includes('/api/messages')) {
+        opts.headers = opts.headers || {};
+        opts.headers['x-session-token'] = token;
+      }
+      return origFetch(url, opts).then(async res => {
+        if (res.status === 401 && url.includes('/api/')) {
+          localStorage.removeItem('tc_token');
+          localStorage.removeItem('tc_username');
+          location.reload();
+        }
+        return res;
+      });
+    };
+  }
+
+  function addLogoutButton(username) {
+    const topbar = document.querySelector('.topbar');
+    if (!topbar) return;
+    const el = document.createElement('div');
+    el.style.cssText = 'display:flex;align-items:center;gap:12px;margin-left:auto;';
+    el.innerHTML = `
+      <span style="font-size:12px;color:#5c5448;">Signed in as <strong style="color:#9a8e7a;">${username}</strong></span>
+      <button onclick="doLogout()" style="
+        background:transparent;border:1px solid rgba(255,220,160,0.16);border-radius:7px;
+        color:#9a8e7a;font-family:'DM Sans',sans-serif;font-size:12px;
+        padding:5px 12px;cursor:pointer;
+      ">Sign out</button>`;
+    topbar.appendChild(el);
+  }
+
+  window.doLogout = async function() {
+    const token = localStorage.getItem('tc_token');
+    await fetch('/api/logout', { method: 'POST', headers: { 'x-session-token': token } }).catch(()=>{});
+    localStorage.removeItem('tc_token');
+    localStorage.removeItem('tc_username');
+    location.reload();
+  };
+})();
+</script>
