@@ -220,7 +220,18 @@ select option{background:#1a1712;}
               <option value="">— Select a voice —</option>
             </select>
           </div>
-          <div class="form-hint" style="margin-top:6px;">Don't have one yet? <a href="#" onclick="showView('voices',null);return false;" style="color:var(--gold);text-decoration:none;">Create a voice profile →</a></div>
+          <div id="toneSection" style="margin-top:14px;">
+            <div class="field-label">Tone for this batch</div>
+            <div class="chips">
+              <div class="chip sel" data-tone="emotional">Emotional &amp; raw</div>
+              <div class="chip" data-tone="inspirational">Inspirational</div>
+              <div class="chip" data-tone="gentle">Gentle &amp; nurturing</div>
+              <div class="chip" data-tone="bold">Bold &amp; direct</div>
+              <div class="chip" data-tone="spiritual">Deeply spiritual</div>
+              <div class="chip" data-tone="empowering">Empowering</div>
+            </div>
+          </div>
+          <div class="form-hint" style="margin-top:6px;">Don't have one yet?? <a href="#" onclick="showView('voices',null);return false;" style="color:var(--gold);text-decoration:none;">Create a voice profile →</a></div>
         </div>
 
         <div>
@@ -433,8 +444,18 @@ select option{background:#1a1712;}
 // ─── STATE ───────────────────────────────────────────────────────────────
 let voices = JSON.parse(localStorage.getItem('tc_voices') || '[]');
 let selectedLen = 'medium';
+let selectedTone = 'emotional';
 let allResults = [];
 let isRunning = false;
+
+// ─── TONE CHIPS
+document.querySelectorAll('[data-tone]').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('[data-tone]').forEach(x => x.classList.remove('sel'));
+    c.classList.add('sel');
+    selectedTone = c.dataset.tone;
+  });
+});
 
 // ─── LENGTH CHIPS ────────────────────────────────────────────────────────
 document.querySelectorAll('[data-len]').forEach(c => {
@@ -659,7 +680,16 @@ function buildSystemPrompt(voice) {
   if (voice.goodWords) prompt += `WORDS AND SLANG THEY USE FREELY (use these naturally, don't shy away):\n${voice.goodWords}\n\n`;
   if (voice.badWords) prompt += `WORDS TO NEVER USE:\n${voice.badWords}\n\n`;
   if (voice.notes) prompt += `ADDITIONAL NOTES:\n${voice.notes}\n\n`;
-  prompt += `FORMAT RULES:
+  const toneInstructions = {
+  emotional: 'Write with raw emotion. Hook them in the first line with something they feel in their chest.',
+  inspirational: 'Write to lift people up. Remind them of their strength. Make them feel something shifted after reading this.',
+  gentle: 'Be warm and nurturing. Acknowledge their pain softly before offering perspective. Never preachy.',
+  bold: 'Be bold and direct. Say what others are afraid to say. Stop them mid-scroll with a truth they recognise.',
+  spiritual: 'Write with spiritual depth. Reference the power of consciousness and imagination. Feel like a quiet revelation.',
+  empowering: 'Write to activate their power. Shift them from feeling stuck to feeling like the creator of their reality.'
+};
+if (toneInstructions[selectedTone]) prompt += `TONE INSTRUCTION: ${toneInstructions[selectedTone]}\n\n`;
+prompt += `FORMAT RULES:
 - Hook the reader in the very first sentence — a truth they feel in their chest, or a question that stops them mid-scroll
 - No hashtags, no emojis
 - Do NOT include any URL in the post body — the link goes in the first comment
