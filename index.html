@@ -653,6 +653,9 @@ Return ONLY the JSON. No explanation, no markdown, no backticks.`
     })
   });
   const data = await res.json();
+  if (!data.content || !Array.isArray(data.content)) {
+    throw new Error(data.error?.message || data.error || 'API error — check your Anthropic key');
+  }
   const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
   try {
     const clean = raw.replace(/^```[a-z]*\n?/, '').replace(/```$/, '').trim();
@@ -661,7 +664,7 @@ Return ONLY the JSON. No explanation, no markdown, no backticks.`
     return { text: parsed.text, imageUrl: parsed.imageUrl || null };
   } catch {
     if (raw.length > 80) return { text: raw, imageUrl: null };
-    throw new Error('Could not read article');
+    throw new Error('Could not read article content');
   }
 }
 
@@ -716,6 +719,9 @@ async function generatePost(articleText, voice) {
     })
   });
   const data = await res.json();
+  if (!data.content || !Array.isArray(data.content)) {
+    throw new Error(data.error?.message || data.error || 'API error — check your Anthropic key');
+  }
   const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
   if (!text) throw new Error('No post generated');
   return text;
@@ -932,14 +938,24 @@ renderVoiceGrid();
     const origFetch = window.fetch;
     window.fetch = function(url, opts = {}) {
       if (typeof url === 'string' && url.includes('/api/messages')) {
-        opts.headers = opts.headers || {};
+        opts = Object.assign({}, opts);
+        opts.headers = Object.assign({}, opts.headers || {});
         opts.headers['x-session-token'] = token;
+        opts.headers['x-username'] = localStorage.getItem('tc_username') || '';
       }
       return origFetch(url, opts).then(async res => {
-        if (res.status === 401 && url.includes('/api/')) {
-          localStorage.removeItem('tc_token');
-          localStorage.removeItem('tc_username');
-          location.reload();
+        // Only log out on 401 for auth errors, not API errors
+        if (res.status === 401 && url.includes('/api/messages')) {
+          const clone = res.clone();
+          try {
+            const data = await clone.json();
+            // Only reload if it's genuinely an auth issue
+            if (data.error && data.error.includes('authenticated')) {
+              localStorage.removeItem('tc_token');
+              localStorage.removeItem('tc_username');
+              location.reload();
+            }
+          } catch(e) {}
         }
         return res;
       });
