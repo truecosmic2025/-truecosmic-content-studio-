@@ -14,6 +14,7 @@
   --success-bg:rgba(90,138,106,0.14);--success:#7ab88a;
   --error-bg:rgba(138,90,90,0.14);--error:#c87a7a;
   --info-bg:rgba(74,106,138,0.14);--info:#7aaac8;
+  --medium:#00ab6c;--medium-dim:rgba(0,171,108,0.12);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;line-height:1.6;}
@@ -29,6 +30,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .nav-item{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .14s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-weight:300;}
 .nav-item:hover{background:var(--surface2);color:var(--text);}
 .nav-item.active{background:var(--gold-dim);color:var(--gold-light);}
+.nav-item.active.medium-nav{background:var(--medium-dim);color:var(--medium);}
 .nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.75;}
 .sidebar-stats{padding:14px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:7px;}
 .stat-box{background:var(--surface2);border-radius:8px;padding:10px;}
@@ -53,6 +55,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .btn-ghost:disabled{opacity:.38;cursor:not-allowed;}
 .btn-danger{background:var(--error-bg);color:var(--error);border:1px solid rgba(200,122,122,.2);}
 .btn-danger:hover{background:rgba(138,90,90,.25);}
+.btn-medium{background:var(--medium);color:#fff;font-weight:500;}
+.btn-medium:hover{background:#00c97e;}
+.btn-medium:disabled{opacity:.38;cursor:not-allowed;}
 
 /* Generator layout */
 .gen-body{display:grid;grid-template-columns:340px 1fr;flex:1;min-height:0;overflow:hidden;}
@@ -151,6 +156,40 @@ select option{background:#1a1712;}
 /* Voice selector in generator */
 .voice-select-row{display:flex;align-items:center;gap:8px;}
 .voice-dot{width:28px;height:28px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:12px;color:var(--gold-light);flex-shrink:0;}
+
+/* ── MEDIUM GENERATOR ─────────────────────────────────────────── */
+.medium-body{display:grid;grid-template-columns:320px 1fr;flex:1;min-height:0;overflow:hidden;}
+.medium-input{padding:24px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:18px;overflow-y:auto;}
+.medium-output{overflow-y:auto;padding:0;}
+
+.medium-article-wrap{padding:28px 32px;}
+.medium-article-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--text3);text-align:center;padding:48px 24px;}
+
+.article-section{margin-bottom:22px;}
+.article-section-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--medium);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.article-section-label::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--medium);}
+.article-content{font-size:13.5px;line-height:1.8;color:var(--text);white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.article-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.article-tag{font-size:12px;padding:4px 12px;border-radius:999px;background:var(--medium-dim);border:1px solid rgba(0,171,108,0.25);color:var(--medium);}
+.canonical-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.6;}
+.canonical-box strong{color:var(--text);display:block;margin-bottom:4px;}
+.canonical-url{font-family:monospace;font-size:11px;color:var(--medium);word-break:break-all;}
+
+.medium-export-bar{padding:12px 22px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);gap:12px;flex-shrink:0;}
+
+/* Queue mode */
+.queue-item{border-bottom:1px solid var(--border);padding:14px 22px;display:flex;align-items:center;gap:12px;animation:fadeUp .2s ease;}
+.queue-item-url{font-size:12px;font-family:monospace;color:var(--text3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.queue-item-status{font-size:11px;flex-shrink:0;}
+.queue-item-actions{display:flex;gap:6px;flex-shrink:0;}
+.queue-expand{width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:0;}
+.queue-detail{padding:14px 22px 20px;border-bottom:1px solid var(--border);background:var(--surface2);display:none;}
+.queue-detail.open{display:block;}
+
+/* Mode toggle */
+.mode-toggle{display:flex;background:var(--surface2);border-radius:8px;padding:3px;gap:2px;border:1px solid var(--border);}
+.mode-btn{flex:1;padding:5px 12px;border-radius:6px;border:none;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .13s;color:var(--text2);background:transparent;}
+.mode-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3);}
 </style>
 </head>
 <body>
@@ -167,6 +206,10 @@ select option{background:#1a1712;}
     <button class="nav-item active" onclick="showView('generator',this)">
       <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
       Post Generator
+    </button>
+    <button class="nav-item" id="mediumNavBtn" onclick="showView('medium',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg>
+      Medium Generator
     </button>
     <div class="nav-section">Team</div>
     <button class="nav-item" onclick="showView('voices',this)">
@@ -209,9 +252,7 @@ select option{background:#1a1712;}
     </div>
 
     <div class="gen-body" style="flex:1;overflow:hidden;">
-      <!-- Input panel -->
       <div class="gen-input-panel">
-
         <div>
           <div class="field-label">Voice / Team member</div>
           <div class="voice-select-row">
@@ -231,12 +272,12 @@ select option{background:#1a1712;}
               <div class="chip" data-tone="empowering">Empowering</div>
             </div>
           </div>
-          <div class="form-hint" style="margin-top:6px;">Don't have one yet?? <a href="#" onclick="showView('voices',null);return false;" style="color:var(--gold);text-decoration:none;">Create a voice profile →</a></div>
+          <div class="form-hint" style="margin-top:6px;">Don't have one yet? <a href="#" onclick="showView('voices',null);return false;" style="color:var(--gold);text-decoration:none;">Create a voice profile →</a></div>
         </div>
 
         <div>
           <div class="field-label">Article URLs <span id="urlCount" style="color:var(--text3);font-size:10px;text-transform:none;letter-spacing:0;margin-left:6px;"></span></div>
-          <textarea id="urlInput" rows="9" placeholder="https://truecosmic.com/manifesting-love&#10;https://truecosmic.com/he-misses-you&#10;https://truecosmic.com/letting-go&#10;&#10;One URL per line..." oninput="countUrls()"></textarea>
+          <textarea id="urlInput" rows="9" placeholder="https://truecosmic.com/manifesting-love&#10;https://truecosmic.com/he-misses-you&#10;&#10;One URL per line..." oninput="countUrls()"></textarea>
         </div>
 
         <div>
@@ -253,10 +294,8 @@ select option{background:#1a1712;}
           <div class="prog-wrap"><div class="prog-fill" id="progFill"></div></div>
           <div class="prog-meta"><span id="progText">Starting...</span><span id="progCount"></span></div>
         </div>
-
       </div>
 
-      <!-- Results panel -->
       <div class="gen-results-panel" id="resultsPanel">
         <div class="results-empty" id="emptyState">
           <svg width="44" height="44" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="opacity:.18;"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
@@ -279,6 +318,135 @@ select option{background:#1a1712;}
     </div>
   </div>
 
+  <!-- ═══ MEDIUM GENERATOR VIEW ═══ -->
+  <div class="view" id="view-medium">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Medium Article Generator</div>
+        <div class="page-sub">Turns TrueCosmic articles into fully formatted, GEO-ready Medium posts</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="modeSingle" onclick="setMediumMode('single')">Single</button>
+          <button class="mode-btn" id="modeBatch" onclick="setMediumMode('batch')">Batch</button>
+        </div>
+        <button class="btn btn-ghost" onclick="clearMedium()">Clear</button>
+        <button class="btn btn-medium" id="mediumGenBtn" onclick="startMedium()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg>
+          Generate
+        </button>
+      </div>
+    </div>
+
+    <div class="medium-body" style="flex:1;overflow:hidden;">
+      <!-- Input panel -->
+      <div class="medium-input">
+
+        <!-- Single mode -->
+        <div id="singleModeInputs">
+          <div class="form-row">
+            <div class="field-label">TrueCosmic Article URL</div>
+            <input type="text" id="mediumUrl" placeholder="https://truecosmic.com/your-article">
+          </div>
+        </div>
+
+        <!-- Batch mode -->
+        <div id="batchModeInputs" style="display:none;">
+          <div class="form-row">
+            <div class="field-label">Article URLs <span id="mediumUrlCount" style="color:var(--text3);font-size:10px;text-transform:none;letter-spacing:0;margin-left:4px;"></span></div>
+            <textarea id="mediumBatchUrls" rows="10" placeholder="https://truecosmic.com/article-1&#10;https://truecosmic.com/article-2&#10;&#10;One URL per line..." oninput="countMediumUrls()"></textarea>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-label">Article style</div>
+          <div class="chips" id="mediumStyleChips">
+            <div class="chip sel" data-mstyle="educational">Educational</div>
+            <div class="chip" data-mstyle="personal">Personal story</div>
+            <div class="chip" data-mstyle="howto">How-to guide</div>
+            <div class="chip" data-mstyle="listicle">List format</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-label">Article length</div>
+          <div class="chips" id="mediumLenChips">
+            <div class="chip" data-mlen="short">Short (400–600 words)</div>
+            <div class="chip sel" data-mlen="medium">Medium (700–900 words)</div>
+            <div class="chip" data-mlen="long">Long (1000–1200 words)</div>
+          </div>
+        </div>
+
+        <div id="mediumProgSection" style="display:none;">
+          <div class="field-label">Progress</div>
+          <div class="prog-wrap"><div class="prog-fill" id="mediumProgFill" style="background:var(--medium);"></div></div>
+          <div class="prog-meta"><span id="mediumProgText">Starting...</span><span id="mediumProgCount"></span></div>
+        </div>
+
+        <div style="background:var(--medium-dim);border:1px solid rgba(0,171,108,0.18);border-radius:10px;padding:13px 14px;">
+          <div style="font-size:11px;font-weight:500;color:var(--medium);margin-bottom:5px;">What this generates</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.65;">
+            ✓ Full Medium-ready article<br>
+            ✓ Canonical URL note (points back to TrueCosmic)<br>
+            ✓ TrueCosmic CTA at the bottom<br>
+            ✓ 5 suggested Medium tags<br>
+            ✓ Copy-ready format
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Output panel -->
+      <div class="medium-output" id="mediumOutputPanel">
+        <div class="medium-article-empty" id="mediumEmptyState">
+          <svg width="44" height="44" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="opacity:.18;"><path d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg>
+          <p style="font-size:13.5px;">Your Medium article will appear here</p>
+          <p style="font-size:12px;">Paste a TrueCosmic URL and hit Generate</p>
+        </div>
+        <div id="mediumSingleResult" style="display:none;">
+          <div class="medium-article-wrap">
+
+            <div class="article-section">
+              <div class="article-section-label">Canonical URL note (paste at top of Medium article)</div>
+              <div class="canonical-box" id="mediumCanonical">
+                <strong>Original article:</strong>
+                <span class="canonical-url" id="mediumCanonicalUrl"></span>
+              </div>
+            </div>
+
+            <div class="article-section">
+              <div class="article-section-label">Full article</div>
+              <div class="article-content" id="mediumArticleText"></div>
+            </div>
+
+            <div class="article-section">
+              <div class="article-section-label">Suggested Medium tags</div>
+              <div class="article-tags" id="mediumTags"></div>
+            </div>
+
+            <div class="result-actions" style="margin-top:8px;">
+              <button class="act-btn" onclick="copyMediumArticle()">Copy full article</button>
+              <button class="act-btn" onclick="copyMediumTags()">Copy tags</button>
+            </div>
+
+          </div>
+        </div>
+        <!-- Batch queue -->
+        <div id="mediumBatchResults"></div>
+      </div>
+    </div>
+
+    <div class="medium-export-bar" id="mediumExportBar" style="display:none;">
+      <div class="export-meta" id="mediumExportMeta"></div>
+      <div style="display:flex;gap:7px;">
+        <button class="btn btn-ghost" onclick="exportMediumCSV()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ VOICES VIEW ═══ -->
   <div class="view" id="view-voices">
     <div class="topbar">
@@ -292,12 +460,9 @@ select option{background:#1a1712;}
       </button>
     </div>
     <div class="voices-body">
-
-      <!-- Editor -->
       <div class="voice-editor" id="voiceEditor" style="display:none;">
         <h3 id="editorTitle">New voice profile</h3>
         <input type="hidden" id="editId">
-
         <div class="form-grid">
           <div class="form-row">
             <div class="field-label">Name</div>
@@ -308,44 +473,37 @@ select option{background:#1a1712;}
             <input type="text" id="eInitials" maxlength="2" placeholder="LL" style="text-transform:uppercase;">
           </div>
         </div>
-
         <div class="form-row">
           <div class="field-label">Writing style — describe how you write</div>
-          <textarea id="eStyle" rows="3" placeholder="Down to earth. Real. Speaks like a friend, not a guru. Short sentences. Doesn't dress things up. Calls things what they are."></textarea>
+          <textarea id="eStyle" rows="3" placeholder="Down to earth. Real. Speaks like a friend, not a guru. Short sentences."></textarea>
           <div class="form-hint">Be specific. This is what the AI uses to match your voice.</div>
         </div>
-
         <div class="form-row">
           <div class="field-label">Example phrases you'd actually use</div>
-          <textarea id="eExamples" rows="4" placeholder="You're not broken, you're just tired of pretending it's fine.&#10;Stop waiting for him to choose you. He's already shown you who he is.&#10;It's not your job to make someone love you right."></textarea>
+          <textarea id="eExamples" rows="4" placeholder="You're not broken, you're just tired of pretending it's fine.&#10;Stop waiting for him to choose you."></textarea>
           <div class="form-hint">One per line. The more examples, the better the AI captures your voice.</div>
         </div>
-
         <div class="form-grid">
           <div class="form-row">
             <div class="field-label">Words / slang you use freely</div>
-            <textarea id="eGoodWords" rows="3" placeholder="piss, shit, bloody, reckon, proper, nah, yeah, honestly, mate"></textarea>
-            <div class="form-hint">Comma separated. The AI won't shy away from these.</div>
+            <textarea id="eGoodWords" rows="3" placeholder="piss, shit, bloody, reckon, proper, nah"></textarea>
+            <div class="form-hint">Comma separated.</div>
           </div>
           <div class="form-row">
             <div class="field-label">Words to never use</div>
-            <textarea id="eBadWords" rows="3" placeholder="universe, vibration, alignment, journey, manifest (overused), souls"></textarea>
-            <div class="form-hint">Comma separated. These will be avoided.</div>
+            <textarea id="eBadWords" rows="3" placeholder="universe, vibration, alignment, journey"></textarea>
+            <div class="form-hint">Comma separated.</div>
           </div>
         </div>
-
         <div class="form-row">
           <div class="field-label">Anything else the AI should know</div>
-          <textarea id="eNotes" rows="2" placeholder="Never preachy. Never ends with a question. Always speaks to someone who's been hurt."></textarea>
+          <textarea id="eNotes" rows="2" placeholder="Never preachy. Never ends with a question."></textarea>
         </div>
-
         <div style="display:flex;gap:8px;margin-top:4px;">
           <button class="btn btn-gold" onclick="saveVoice()">Save voice</button>
           <button class="btn btn-ghost" onclick="closeEditor()">Cancel</button>
         </div>
       </div>
-
-      <!-- Voice cards -->
       <div class="voice-grid" id="voiceGrid"></div>
       <div id="noVoices" style="color:var(--text3);font-size:13px;display:none;">No voice profiles yet. Create your first one above.</div>
     </div>
@@ -362,12 +520,12 @@ select option{background:#1a1712;}
       <div class="steps-grid">
         <div class="step-card"><div class="step-num">01</div><div class="step-title">Set up your voice</div><div class="step-desc">Each team member creates their Voice Profile once — describing how they write, the words they use, slang they're comfortable with, and phrases to avoid.</div></div>
         <div class="step-card"><div class="step-num">02</div><div class="step-title">Paste article URLs</div><div class="step-desc">Collect this week's article URLs from Truecosmic.com. Paste them all at once, one per line. The tool handles the rest.</div></div>
-        <div class="step-card"><div class="step-num">03</div><div class="step-title">Generate & review</div><div class="step-desc">Hit Generate. The AI reads each article, grabs the header image, and writes a post in your exact voice. Review each one and tweak if needed.</div></div>
-        <div class="step-card"><div class="step-num">04</div><div class="step-title">Schedule & comment</div><div class="step-desc">Copy the post body into Facebook. Schedule it natively in the group. The moment it publishes, paste the article link as the very first comment.</div></div>
+        <div class="step-card"><div class="step-num">03</div><div class="step-title">Generate &amp; review</div><div class="step-desc">Hit Generate. The AI reads each article, grabs the header image, and writes a post in your exact voice. Review each one and tweak if needed.</div></div>
+        <div class="step-card"><div class="step-num">04</div><div class="step-title">Schedule &amp; comment</div><div class="step-desc">Copy the post body into Facebook. Schedule it natively in the group. The moment it publishes, paste the article link as the very first comment.</div></div>
       </div>
-      <div class="tip-box"><h4>Why link in comments?</h4><p>Facebook's algorithm actively suppresses posts with external links in the body. Putting the link as the first comment bypasses this and protects your reach. This is the single most important thing your team does.</p></div>
-      <div class="tip-box"><h4>Image tip</h4><p>The tool pulls the article's header image automatically. When you post in Facebook, attach this image to the post body — images with no link in the post body get boosted reach.</p></div>
-      <div class="tip-box"><h4>Post frequency</h4><p>Even with a 95k group, 1–2 posts per day is the sweet spot. More than that and Facebook starts throttling the group's organic reach. Spread your 100+ articles over weeks, not days.</p></div>
+      <div class="tip-box"><h4>Why link in comments?</h4><p>Facebook's algorithm actively suppresses posts with external links in the body. Putting the link as the first comment bypasses this and protects your reach.</p></div>
+      <div class="tip-box"><h4>Medium Generator tip</h4><p>Use the Medium Generator tab to turn your TrueCosmic articles into full Medium posts for GEO. Each article gets a canonical URL note, a TrueCosmic CTA, and suggested tags — copy and paste straight into Medium.</p></div>
+      <div class="tip-box"><h4>Post frequency</h4><p>Even with a 95k group, 1–2 posts per day is the sweet spot. More than that and Facebook starts throttling the group's organic reach.</p></div>
     </div>
   </div>
 
@@ -390,7 +548,7 @@ select option{background:#1a1712;}
             <div class="phase-bullets">
               <div class="phase-bullet">Paste URLs → AI reads articles → posts + images generated</div>
               <div class="phase-bullet">Per-person voice profiles keep each post sounding authentic</div>
-              <div class="phase-bullet">Export CSV for batch scheduling</div>
+              <div class="phase-bullet">Medium Generator turns 600+ articles into GEO citations</div>
             </div>
           </div>
         </div>
@@ -399,7 +557,7 @@ select option{background:#1a1712;}
           <div class="phase-content">
             <div class="phase-tag">Next — 1 to 2 months</div>
             <div class="phase-title">Automated content pipeline</div>
-            <div class="phase-desc">New articles on Truecosmic.com automatically trigger post generation. Team wakes up to a queue of ready-to-approve posts in a shared Google Sheet or Notion board.</div>
+            <div class="phase-desc">New articles on Truecosmic.com automatically trigger post generation. Team wakes up to a queue of ready-to-approve posts.</div>
             <div class="phase-bullets">
               <div class="phase-bullet">RSS feed or CMS webhook fires on every new article</div>
               <div class="phase-bullet">Posts routed to the right team member's voice automatically</div>
@@ -411,12 +569,12 @@ select option{background:#1a1712;}
           <div class="phase-dot">3</div>
           <div class="phase-content">
             <div class="phase-tag">Medium term — 3 to 6 months</div>
-            <div class="phase-title">Smart scheduling</div>
-            <div class="phase-desc">Posts scheduled automatically at the best times based on your group's engagement data. Performance data feeds back in to improve hooks and tone over time.</div>
+            <div class="phase-title">Smart scheduling + GEO compounding</div>
+            <div class="phase-desc">Posts scheduled at best times. Medium publishing cadence becomes fully automated. TrueCosmic appears in AI recommendations.</div>
             <div class="phase-bullets">
               <div class="phase-bullet">Best posting times calculated per day of week</div>
-              <div class="phase-bullet">Top-performing styles weighted higher in generation</div>
-              <div class="phase-bullet">Monthly report generated automatically</div>
+              <div class="phase-bullet">Medium articles published on a weekly cadence automatically</div>
+              <div class="phase-bullet">GEO citations compounding across 100+ Medium articles</div>
             </div>
           </div>
         </div>
@@ -425,7 +583,7 @@ select option{background:#1a1712;}
           <div class="phase-content">
             <div class="phase-tag">Future — 6 to 12 months</div>
             <div class="phase-title">Fully hands-off</div>
-            <div class="phase-desc">Article published → post generated → AI quality check → scheduled → posted → link added as first comment. Human oversight only when something flags for review.</div>
+            <div class="phase-desc">Article published → post generated → scheduled → posted → link in comment. Human oversight only when something flags for review.</div>
             <div class="phase-bullets">
               <div class="phase-bullet">AI quality gate replaces manual review for standard posts</div>
               <div class="phase-bullet">Automatic link-in-comment via Facebook Graph API</div>
@@ -441,14 +599,21 @@ select option{background:#1a1712;}
 </div><!-- /app -->
 
 <script>
-// ─── STATE ───────────────────────────────────────────────────────────────
+// ─── STATE ───────────────────────────────────────────────────────────────────
 let voices = JSON.parse(localStorage.getItem('tc_voices') || '[]');
 let selectedLen = 'medium';
 let selectedTone = 'emotional';
 let allResults = [];
 let isRunning = false;
 
-// ─── TONE CHIPS
+// Medium state
+let mediumMode = 'single'; // 'single' | 'batch'
+let selectedMediumStyle = 'educational';
+let selectedMediumLen = 'medium';
+let mediumResults = [];
+let isMediumRunning = false;
+
+// ─── TONE CHIPS ──────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-tone]').forEach(c => {
   c.addEventListener('click', () => {
     document.querySelectorAll('[data-tone]').forEach(x => x.classList.remove('sel'));
@@ -457,7 +622,7 @@ document.querySelectorAll('[data-tone]').forEach(c => {
   });
 });
 
-// ─── LENGTH CHIPS ────────────────────────────────────────────────────────
+// ─── LENGTH CHIPS ────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-len]').forEach(c => {
   c.addEventListener('click', () => {
     document.querySelectorAll('[data-len]').forEach(x => x.classList.remove('sel'));
@@ -466,17 +631,348 @@ document.querySelectorAll('[data-len]').forEach(c => {
   });
 });
 
-// ─── NAV ─────────────────────────────────────────────────────────────────
+// ─── MEDIUM CHIPS ────────────────────────────────────────────────────────────
+document.querySelectorAll('[data-mstyle]').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('[data-mstyle]').forEach(x => x.classList.remove('sel'));
+    c.classList.add('sel');
+    selectedMediumStyle = c.dataset.mstyle;
+  });
+});
+document.querySelectorAll('[data-mlen]').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('[data-mlen]').forEach(x => x.classList.remove('sel'));
+    c.classList.add('sel');
+    selectedMediumLen = c.dataset.mlen;
+  });
+});
+
+// ─── NAV ─────────────────────────────────────────────────────────────────────
 function showView(name, el) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => { n.classList.remove('active'); n.classList.remove('medium-nav'); });
   document.getElementById('view-' + name).classList.add('active');
-  if (el) el.classList.add('active');
+  if (el) {
+    el.classList.add('active');
+    if (name === 'medium') el.classList.add('medium-nav');
+  }
   if (name === 'voices') renderVoiceGrid();
   if (name === 'generator') populateVoiceSelect();
 }
 
-// ─── VOICE PROFILES ───────────────────────────────────────────────────────
+// ─── MEDIUM MODE TOGGLE ──────────────────────────────────────────────────────
+function setMediumMode(mode) {
+  mediumMode = mode;
+  document.getElementById('modeSingle').classList.toggle('active', mode === 'single');
+  document.getElementById('modeBatch').classList.toggle('active', mode === 'batch');
+  document.getElementById('singleModeInputs').style.display = mode === 'single' ? 'block' : 'none';
+  document.getElementById('batchModeInputs').style.display = mode === 'batch' ? 'block' : 'none';
+}
+
+function countMediumUrls() {
+  const urls = getMediumBatchUrls();
+  const el = document.getElementById('mediumUrlCount');
+  el.textContent = urls.length ? `${urls.length} URL${urls.length > 1 ? 's' : ''}` : '';
+}
+
+function getMediumBatchUrls() {
+  return document.getElementById('mediumBatchUrls').value.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+}
+
+// ─── MEDIUM GENERATE ─────────────────────────────────────────────────────────
+async function startMedium() {
+  if (isMediumRunning) return;
+
+  if (mediumMode === 'single') {
+    const url = document.getElementById('mediumUrl').value.trim();
+    if (!url || !url.startsWith('http')) { alert('Please paste a valid TrueCosmic URL.'); return; }
+    await runMediumSingle(url);
+  } else {
+    const urls = getMediumBatchUrls();
+    if (!urls.length) { alert('Please paste at least one URL.'); return; }
+    await runMediumBatch(urls);
+  }
+}
+
+async function runMediumSingle(url) {
+  isMediumRunning = true;
+  const btn = document.getElementById('mediumGenBtn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+
+  document.getElementById('mediumEmptyState').style.display = 'none';
+  document.getElementById('mediumSingleResult').style.display = 'none';
+  document.getElementById('mediumBatchResults').innerHTML = '';
+
+  try {
+    const result = await generateMediumArticle(url);
+    showMediumSingleResult(url, result);
+    mediumResults = [{ url, ...result }];
+  } catch(e) {
+    document.getElementById('mediumEmptyState').style.display = 'flex';
+    document.getElementById('mediumEmptyState').innerHTML = `
+      <svg width="44" height="44" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="opacity:.18;"><path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+      <p style="font-size:13.5px;color:var(--error);">Error: ${e.message}</p>
+      <p style="font-size:12px;">Check the URL and try again</p>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg> Generate';
+  isMediumRunning = false;
+}
+
+async function runMediumBatch(urls) {
+  isMediumRunning = true;
+  mediumResults = [];
+  const btn = document.getElementById('mediumGenBtn');
+  btn.disabled = true;
+
+  document.getElementById('mediumEmptyState').style.display = 'none';
+  document.getElementById('mediumSingleResult').style.display = 'none';
+  document.getElementById('mediumBatchResults').innerHTML = '';
+  document.getElementById('mediumProgSection').style.display = 'block';
+  document.getElementById('mediumExportBar').style.display = 'none';
+
+  for (let i = 0; i < urls.length; i++) {
+    const url = urls[i];
+    setMediumProgress(i, urls.length, `Processing article ${i + 1} of ${urls.length}…`);
+    const cardId = 'mq' + i;
+    addMediumQueueCard(cardId, url);
+
+    try {
+      const result = await generateMediumArticle(url);
+      doneMediumQueueCard(cardId, url, result);
+      mediumResults.push({ url, ...result, error: null });
+    } catch(e) {
+      errorMediumQueueCard(cardId, url, e.message);
+      mediumResults.push({ url, error: e.message });
+    }
+
+    if (i < urls.length - 1) await new Promise(r => setTimeout(r, 2000));
+  }
+
+  setMediumProgress(urls.length, urls.length, 'Complete');
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg> Generate';
+  isMediumRunning = false;
+
+  const ready = mediumResults.filter(r => !r.error).length;
+  if (ready) {
+    document.getElementById('mediumExportBar').style.display = 'flex';
+    document.getElementById('mediumExportMeta').textContent = `${ready} article${ready !== 1 ? 's' : ''} ready to publish`;
+  }
+}
+
+function setMediumProgress(done, total, text) {
+  document.getElementById('mediumProgFill').style.width = (total ? Math.round((done / total) * 100) : 0) + '%';
+  document.getElementById('mediumProgText').textContent = text;
+  document.getElementById('mediumProgCount').textContent = `${done}/${total}`;
+}
+
+// ─── MEDIUM ARTICLE GENERATION ───────────────────────────────────────────────
+const MEDIUM_LENGTH_MAP = {
+  short: 'Write 400 to 600 words.',
+  medium: 'Write 700 to 900 words.',
+  long: 'Write 1000 to 1200 words.'
+};
+
+const MEDIUM_STYLE_MAP = {
+  educational: 'Write as an educational, authoritative explainer. Clear headings, facts, practical insights.',
+  personal: 'Write with a personal, first-person narrative style. Relatable, warm, story-driven.',
+  howto: 'Write as a practical how-to guide. Step-by-step, actionable, easy to follow.',
+  listicle: 'Write in a list format with clear numbered points or subheadings. Scannable and punchy.'
+};
+
+async function generateMediumArticle(url) {
+  // Step 1 — fetch the article
+  const fetchRes = await fetch('/api/fetch-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+  const fetchData = await fetchRes.json();
+  if (!fetchRes.ok) throw new Error(fetchData.error || 'Could not fetch article');
+  const { text: articleText, title: articleTitle } = fetchData;
+
+  // Step 2 — generate the Medium article
+  const lengthNote = MEDIUM_LENGTH_MAP[selectedMediumLen];
+  const styleNote = MEDIUM_STYLE_MAP[selectedMediumStyle];
+
+  const systemPrompt = `You are a writer for TrueCosmic, a Neville Goddard and Law of Assumption platform with 95,000+ community members. You write high-quality articles for Medium that establish TrueCosmic as an authority on manifestation, consciousness, and Neville Goddard's teachings.
+
+Your articles must:
+- Be written in clear, engaging prose that works well on Medium
+- Establish genuine authority on the topic
+- Be SEO and GEO-friendly — written so AI models like ChatGPT and Perplexity would cite them as an answer to related questions
+- End with a natural call to action directing readers to TrueCosmic.com
+- Sound like a knowledgeable human writer, never like AI
+
+Style: ${styleNote}
+
+IMPORTANT: Respond with a JSON object with exactly these fields:
+{
+  "title": "The article title",
+  "article": "The full article text with proper paragraph breaks using \\n\\n",
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
+}
+
+The article field should be the complete article including the title at the top, all body paragraphs, and this exact CTA at the end:
+
+---
+
+*This article was originally published on [TrueCosmic.com](https://truecosmic.com) — a platform dedicated to Neville Goddard's teachings and the Law of Assumption. Explore our full library of lectures, guided meditations, and manifestation tools.*
+
+The tags should be 5 relevant Medium tags from: Law of Assumption, Neville Goddard, Manifestation, Spirituality, Personal Development, Self Improvement, Consciousness, Mental Health, Psychology, Mindfulness, Life Lessons, Motivation, Relationships, Love, Self Love`;
+
+  const userPrompt = `${lengthNote}
+
+Rewrite the following TrueCosmic article for Medium. Keep the core content and insights but rewrite it as a standalone Medium piece. The original article URL is: ${url}
+
+ORIGINAL ARTICLE CONTENT:
+${articleText.slice(0, 5000)}`;
+
+  const res = await fetch('/api/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+
+  const data = await res.json();
+  if (!data.content || !Array.isArray(data.content)) {
+    throw new Error(data.error?.message || data.error || 'API error');
+  }
+
+  const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
+
+  // Parse JSON response
+  let parsed;
+  try {
+    const clean = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+    parsed = JSON.parse(clean);
+  } catch(e) {
+    // Fallback: treat whole response as article
+    parsed = { title: articleTitle || 'Article', article: raw, tags: ['Law of Assumption', 'Neville Goddard', 'Manifestation', 'Spirituality', 'Personal Development'] };
+  }
+
+  return parsed;
+}
+
+// ─── MEDIUM RESULT DISPLAY ───────────────────────────────────────────────────
+function showMediumSingleResult(url, result) {
+  document.getElementById('mediumCanonicalUrl').textContent = url;
+  document.getElementById('mediumArticleText').textContent = result.article || '';
+  const tagsEl = document.getElementById('mediumTags');
+  tagsEl.innerHTML = (result.tags || []).map(t => `<span class="article-tag">${t}</span>`).join('');
+  document.getElementById('mediumSingleResult').style.display = 'block';
+}
+
+function addMediumQueueCard(id, url) {
+  const list = document.getElementById('mediumBatchResults');
+  const el = document.createElement('div');
+  el.className = 'queue-item';
+  el.id = id;
+  el.innerHTML = `
+    <span class="queue-item-url">${url}</span>
+    <span class="queue-item-status badge-loading result-badge"><span class="spinner"></span> Processing…</span>`;
+  list.appendChild(el);
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function doneMediumQueueCard(id, url, result) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const articleEscaped = (result.article || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const tags = (result.tags || []).map(t => `<span class="article-tag">${t}</span>`).join('');
+  el.innerHTML = `
+    <div style="width:100%;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:0;">
+        <button class="queue-expand" onclick="toggleQueueDetail('${id}-detail')">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="queue-item-url">${url}</span>
+            <span class="result-badge badge-done">✓ Ready</span>
+            <span style="font-size:11px;color:var(--text3);">click to expand</span>
+          </div>
+        </button>
+        <button class="act-btn" onclick="doCopy(this, document.getElementById('${id}-article').textContent)">Copy</button>
+      </div>
+      <div class="queue-detail" id="${id}-detail">
+        <div class="article-section" style="margin-top:14px;">
+          <div class="article-section-label">Canonical URL</div>
+          <div class="canonical-box"><strong>Original:</strong><span class="canonical-url">${url}</span></div>
+        </div>
+        <div class="article-section" style="margin-top:14px;">
+          <div class="article-section-label">Article</div>
+          <div class="article-content" id="${id}-article">${articleEscaped}</div>
+        </div>
+        <div class="article-section" style="margin-top:14px;">
+          <div class="article-section-label">Tags</div>
+          <div class="article-tags">${tags}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function errorMediumQueueCard(id, url, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = `
+    <span class="queue-item-url">${url}</span>
+    <span class="result-badge badge-error">✕ Error: ${msg}</span>`;
+}
+
+function toggleQueueDetail(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+function copyMediumArticle() {
+  const text = document.getElementById('mediumArticleText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.result-actions .act-btn');
+    if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy full article', 1800); }
+  });
+}
+
+function copyMediumTags() {
+  const tags = Array.from(document.querySelectorAll('#mediumTags .article-tag')).map(t => t.textContent).join(', ');
+  navigator.clipboard.writeText(tags);
+}
+
+function clearMedium() {
+  if (isMediumRunning) return;
+  document.getElementById('mediumUrl').value = '';
+  document.getElementById('mediumBatchUrls').value = '';
+  document.getElementById('mediumBatchResults').innerHTML = '';
+  document.getElementById('mediumSingleResult').style.display = 'none';
+  document.getElementById('mediumEmptyState').style.display = 'flex';
+  document.getElementById('mediumEmptyState').innerHTML = `
+    <svg width="44" height="44" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="opacity:.18;"><path d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg>
+    <p style="font-size:13.5px;">Your Medium article will appear here</p>
+    <p style="font-size:12px;">Paste a TrueCosmic URL and hit Generate</p>`;
+  document.getElementById('mediumProgSection').style.display = 'none';
+  document.getElementById('mediumExportBar').style.display = 'none';
+  mediumResults = [];
+  countMediumUrls();
+}
+
+function exportMediumCSV() {
+  const rows = [['Article URL', 'Title', 'Full Article', 'Tags']];
+  mediumResults.filter(r => !r.error).forEach(r => {
+    rows.push([r.url, (r.title || '').replace(/"/g,'""'), (r.article || '').replace(/"/g,'""'), (r.tags || []).join(', ')]);
+  });
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = 'truecosmic_medium_articles_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ─── VOICE PROFILES ───────────────────────────────────────────────────────────
 function saveVoices() { localStorage.setItem('tc_voices', JSON.stringify(voices)); }
 
 function openEditor(id) {
@@ -566,7 +1062,7 @@ function onVoiceChange() {
   dot.textContent = v ? v.initials : '?';
 }
 
-// ─── URL COUNT ────────────────────────────────────────────────────────────
+// ─── URL COUNT ────────────────────────────────────────────────────────────────
 function countUrls() {
   const urls = getUrls();
   const el = document.getElementById('urlCount');
@@ -577,7 +1073,7 @@ function getUrls() {
   return document.getElementById('urlInput').value.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
 }
 
-// ─── GENERATE ─────────────────────────────────────────────────────────────
+// ─── FB POST GENERATE ─────────────────────────────────────────────────────────
 async function startGen() {
   if (isRunning) return;
   const voiceId = document.getElementById('voiceSelect').value;
@@ -630,13 +1126,6 @@ function setProgress(done, total, text) {
   document.getElementById('progCount').textContent = `${done}/${total}`;
 }
 
-// ─── FETCH ARTICLE + GENERATE POST IN ONE CALL ────────────────────────────
-async function fetchArticle(url) {
-  // Just return the URL — actual fetch+generate happens in one combined call
-  return { url };
-}
-
-// ─── POST GENERATION ──────────────────────────────────────────────────────
 const LENGTH_MAP = {
   short: 'Write 2 short paragraphs, 80 to 100 words maximum.',
   medium: 'Write 3 to 4 paragraphs, 150 to 200 words.',
@@ -652,16 +1141,16 @@ function buildSystemPrompt(voice) {
   if (voice.badWords) prompt += `WORDS TO NEVER USE:\n${voice.badWords}\n\n`;
   if (voice.notes) prompt += `ADDITIONAL NOTES:\n${voice.notes}\n\n`;
   const toneInstructions = {
-  emotional: 'Write with raw emotion. Hook them in the first line with something they feel in their chest.',
-  inspirational: 'Write to lift people up. Remind them of their strength. Make them feel something shifted after reading this.',
-  gentle: 'Be warm and nurturing. Acknowledge their pain softly before offering perspective. Never preachy.',
-  bold: 'Be bold and direct. Say what others are afraid to say. Stop them mid-scroll with a truth they recognise.',
-  spiritual: 'Write with spiritual depth. Reference the power of consciousness and imagination. Feel like a quiet revelation.',
-  empowering: 'Write to activate their power. Shift them from feeling stuck to feeling like the creator of their reality.'
-};
-if (toneInstructions[selectedTone]) prompt += `TONE INSTRUCTION: ${toneInstructions[selectedTone]}\n\n`;
-prompt += `FORMAT RULES:
-- Hook the reader in the very first sentence — a truth they feel in their chest, or a question that stops them mid-scroll
+    emotional: 'Write with raw emotion. Hook them in the first line with something they feel in their chest.',
+    inspirational: 'Write to lift people up. Remind them of their strength.',
+    gentle: 'Be warm and nurturing. Acknowledge their pain softly before offering perspective. Never preachy.',
+    bold: 'Be bold and direct. Say what others are afraid to say.',
+    spiritual: 'Write with spiritual depth. Reference the power of consciousness and imagination.',
+    empowering: 'Write to activate their power. Shift them from feeling stuck to feeling like the creator of their reality.'
+  };
+  if (toneInstructions[selectedTone]) prompt += `TONE INSTRUCTION: ${toneInstructions[selectedTone]}\n\n`;
+  prompt += `FORMAT RULES:
+- Hook the reader in the very first sentence
 - No hashtags, no emojis
 - Do NOT include any URL in the post body — the link goes in the first comment
 - End with a soft, natural call to action directing people to the link in the comments
@@ -674,7 +1163,6 @@ async function fetchAndGenerate(url, voice) {
   const system = buildSystemPrompt(voice);
   const lengthNote = LENGTH_MAP[selectedLen];
 
-  // Step 1 — fetch the article directly from our server
   const fetchRes = await fetch('/api/fetch-url', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -684,7 +1172,6 @@ async function fetchAndGenerate(url, voice) {
   if (!fetchRes.ok) throw new Error(fetchData.error || 'Could not fetch article');
   const { text: articleText, imageUrl } = fetchData;
 
-  // Step 2 — generate the post using the article text
   const res = await fetch('/api/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -692,26 +1179,17 @@ async function fetchAndGenerate(url, voice) {
       model: 'claude-sonnet-4-5',
       max_tokens: 1000,
       system,
-      messages: [{
-        role: 'user',
-        content: `${lengthNote}
-
-Write the Facebook post based on this article content:
-
-${articleText.slice(0, 4000)}`
-      }]
+      messages: [{ role: 'user', content: `${lengthNote}\n\nWrite the Facebook post based on this article content:\n\n${articleText.slice(0, 4000)}` }]
     })
   });
   const data = await res.json();
-  if (!data.content || !Array.isArray(data.content)) {
-    throw new Error(data.error?.message || data.error || 'API error');
-  }
+  if (!data.content || !Array.isArray(data.content)) throw new Error(data.error?.message || data.error || 'API error');
   const post = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
   if (!post || post.length < 20) throw new Error('Post generation failed');
   return { post, imageUrl };
 }
 
-// ─── RESULT CARDS ──────────────────────────────────────────────────────────
+// ─── RESULT CARDS ─────────────────────────────────────────────────────────────
 function addCard(id, url) {
   const list = document.getElementById('resultsList');
   const el = document.createElement('div');
@@ -725,13 +1203,6 @@ function addCard(id, url) {
     <p style="font-size:12px;color:var(--text3);">Fetching article and image…</p>`;
   list.appendChild(el);
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function setCardStatus(id, status) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const badge = el.querySelector('.result-badge');
-  if (badge) { badge.className = 'result-badge badge-loading'; badge.innerHTML = '<span class="spinner"></span> Writing post…'; }
 }
 
 function doneCard(id, url, post, imageUrl) {
@@ -775,7 +1246,7 @@ function doCopy(btn, text) {
   });
 }
 
-// ─── EXPORT ────────────────────────────────────────────────────────────────
+// ─── FB EXPORT ────────────────────────────────────────────────────────────────
 function copyAll() {
   const t = allResults.filter(r => r.post)
     .map(r => `POST:\n${r.post}\n\nLINK FOR FIRST COMMENT:\n${r.url}${r.imageUrl ? '\n\nHEADER IMAGE:\n' + r.imageUrl : ''}`)
@@ -812,12 +1283,10 @@ function updateStats(gen, ready) {
   document.getElementById('stat-ready').textContent = ready;
 }
 
-// ─── INIT ──────────────────────────────────────────────────────────────────
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 populateVoiceSelect();
 renderVoiceGrid();
 </script>
-</body>
-</html>
 
 <script>
 // ─── AUTH LAYER ───────────────────────────────────────────────────────────────
@@ -833,37 +1302,29 @@ renderVoiceGrid();
     ">
       <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#e8c97e;margin-bottom:4px;">Truecosmic</div>
       <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5c5448;margin-bottom:32px;">Content Studio</div>
-
       <div id="loginError" style="
         background:rgba(138,90,90,0.14);border:1px solid rgba(200,122,122,.2);
         border-radius:8px;padding:10px;font-size:13px;color:#c87a7a;
         margin-bottom:16px;display:none;
       "></div>
-
       <input id="loginUser" type="text" placeholder="Username" autocomplete="username" style="
         width:100%;background:#201d18;border:1px solid rgba(255,220,160,0.08);
         border-radius:9px;color:#f0e8d8;font-family:'DM Sans',sans-serif;
-        font-size:14px;padding:11px 14px;outline:none;margin-bottom:10px;
-        box-sizing:border-box;
+        font-size:14px;padding:11px 14px;outline:none;margin-bottom:10px;box-sizing:border-box;
       ">
       <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password" style="
         width:100%;background:#201d18;border:1px solid rgba(255,220,160,0.08);
         border-radius:9px;color:#f0e8d8;font-family:'DM Sans',sans-serif;
-        font-size:14px;padding:11px 14px;outline:none;margin-bottom:20px;
-        box-sizing:border-box;
+        font-size:14px;padding:11px 14px;outline:none;margin-bottom:20px;box-sizing:border-box;
       ">
       <button id="loginBtn" onclick="doLogin()" style="
         width:100%;background:#c9a55a;color:#1a1208;border:none;border-radius:9px;
-        font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
-        padding:12px;cursor:pointer;
+        font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:12px;cursor:pointer;
       ">Sign in</button>
-      <div style="font-size:11px;color:#5c5448;margin-top:20px;">
-        Access restricted to team members only
-      </div>
+      <div style="font-size:11px;color:#5c5448;margin-top:20px;">Access restricted to team members only</div>
     </div>
   </div>`;
 
-  // Check if already logged in
   const token = localStorage.getItem('tc_token');
   const username = localStorage.getItem('tc_username');
 
@@ -875,7 +1336,6 @@ renderVoiceGrid();
       });
     });
   } else {
-    // Add session token to all API calls
     patchFetch(token);
     document.addEventListener('DOMContentLoaded', () => addLogoutButton(username));
   }
@@ -885,13 +1345,10 @@ renderVoiceGrid();
     const errEl = document.getElementById('loginError');
     const user = document.getElementById('loginUser').value.trim();
     const pass = document.getElementById('loginPass').value;
-
     if (!user || !pass) { showErr('Please enter your username and password.'); return; }
-
     btn.textContent = 'Signing in…';
     btn.disabled = true;
     errEl.style.display = 'none';
-
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
@@ -900,7 +1357,6 @@ renderVoiceGrid();
       });
       const data = await res.json();
       if (!res.ok) { showErr(data.error || 'Login failed.'); btn.textContent = 'Sign in'; btn.disabled = false; return; }
-
       localStorage.setItem('tc_token', data.token);
       localStorage.setItem('tc_username', data.username);
       patchFetch(data.token);
@@ -921,19 +1377,17 @@ renderVoiceGrid();
   function patchFetch(token) {
     const origFetch = window.fetch;
     window.fetch = function(url, opts = {}) {
-      if (typeof url === 'string' && url.includes('/api/messages')) {
+      if (typeof url === 'string' && (url.includes('/api/messages') || url.includes('/api/fetch-url'))) {
         opts = Object.assign({}, opts);
         opts.headers = Object.assign({}, opts.headers || {});
         opts.headers['x-session-token'] = token;
         opts.headers['x-username'] = localStorage.getItem('tc_username') || '';
       }
       return origFetch(url, opts).then(async res => {
-        // Only log out on 401 for auth errors, not API errors
-        if (res.status === 401 && url.includes('/api/messages')) {
+        if (res.status === 401 && (url.includes('/api/messages') || url.includes('/api/fetch-url'))) {
           const clone = res.clone();
           try {
             const data = await clone.json();
-            // Only reload if it's genuinely an auth issue
             if (data.error && data.error.includes('authenticated')) {
               localStorage.removeItem('tc_token');
               localStorage.removeItem('tc_username');
@@ -955,8 +1409,7 @@ renderVoiceGrid();
       <span style="font-size:12px;color:#5c5448;">Signed in as <strong style="color:#9a8e7a;">${username}</strong></span>
       <button onclick="doLogout()" style="
         background:transparent;border:1px solid rgba(255,220,160,0.16);border-radius:7px;
-        color:#9a8e7a;font-family:'DM Sans',sans-serif;font-size:12px;
-        padding:5px 12px;cursor:pointer;
+        color:#9a8e7a;font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 12px;cursor:pointer;
       ">Sign out</button>`;
     topbar.appendChild(el);
   }
@@ -970,3 +1423,5 @@ renderVoiceGrid();
   };
 })();
 </script>
+</body>
+</html>
