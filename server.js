@@ -57,7 +57,6 @@ app.post('/api/login', (req, res) => {
 
 // ── LOGOUT ───────────────────────────────────────────────────────────────────
 app.post('/api/logout', (req, res) => {
-  // Client clears localStorage — nothing to do server-side with stateless tokens
   res.json({ ok: true });
 });
 
@@ -74,7 +73,6 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Invalid session. Please log in again.' });
   }
 
-  // Verify user still exists in TEAM_USERS
   const users = getUsers();
   if (!users[username.toLowerCase()]) {
     return res.status(401).json({ error: 'Account not found. Please contact your admin.' });
@@ -83,6 +81,77 @@ function requireAuth(req, res, next) {
   req.username = username;
   next();
 }
+
+// ── FETCH URL (server-side article scraper) ───────────────────────────────────
+// Called by both Post Generator and Medium Article Generator
+app.post('/api/fetch-url', requireAuth, async (req, res) => {
+  const { url } = req.body;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: 'Invalid URL.' });
+  }
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; TrueCosmic-ContentStudio/1.0)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (!response.ok) {
+      return res.status(502).json({ error: `Could not fetch article (HTTP ${response.status})` });
+    }
+
+    const html = await response.text();
+
+    // Extract og:image
+    const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    const imageUrl = ogMatch ? ogMatch[1] : null;
+
+    // Extract og:title
+    const titleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
+    const ogTitle = titleMatch ? titleMatch[1] : null;
+
+    // Extract meta description
+    const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
+    const metaDesc = descMatch ? descMatch[1] : null;
+
+    // Strip HTML to plain text
+    let text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+      .replace(/<header[\s\S]*?<\/header>/gi, '')
+      .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+      .replace(/<aside[\s\S]*?<\/aside>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    // Extract page title from <title> tag as fallback
+    const pageTitleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const pageTitle = ogTitle || (pageTitleMatch ? pageTitleMatch[1].trim() : null);
+
+    res.json({ text, imageUrl, title: pageTitle, metaDesc });
+  } catch (err) {
+    console.error('fetch-url error:', err.message);
+    if (err.name === 'TimeoutError') {
+      return res.status(504).json({ error: 'Article took too long to load. Try again.' });
+    }
+    res.status(500).json({ error: 'Failed to fetch article: ' + err.message });
+  }
+});
 
 // ── ANTHROPIC PROXY (protected) ───────────────────────────────────────────────
 app.post('/api/messages', requireAuth, async (req, res) => {
@@ -96,7 +165,6 @@ app.post('/api/messages', requireAuth, async (req, res) => {
         'Content-Type': 'application/json',
         'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'web-search-2025-03-05',
       },
       body: JSON.stringify(req.body),
     });
