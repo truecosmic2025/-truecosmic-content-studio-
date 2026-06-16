@@ -6,13 +6,17 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-// Use ANTHROPIC_API_KEY as signing secret so no extra env var needed
+// Admin username (set via env or default to 'michael')
+const ADMIN_USERNAME = (process.env.ADMIN_USERNAME || 'michael').toLowerCase();
+
+// In-memory post log (survives until server restart — good enough for daily use)
+const postLog = []; // { id, username, url, post, imageUrl, voiceName, timestamp }
+const MAX_LOG = 500;
+
 function getSecret() {
   return ANTHROPIC_API_KEY || 'fallback-secret-change-me';
 }
 
-// Parse team users from env var
-// Format: TEAM_USERS=lauren:pass123,sarah:pass456
 function getUsers() {
   const raw = process.env.TEAM_USERS || '';
   const users = {};
@@ -23,17 +27,19 @@ function getUsers() {
   return users;
 }
 
-// Generate a persistent token — survives server restarts
 function makeToken(username) {
   const payload = `${username}:${getSecret()}`;
   return crypto.createHmac('sha256', getSecret()).update(payload).digest('hex');
 }
 
-// Verify token without any stored state
 function verifyToken(token, username) {
   if (!token || !username) return false;
   const expected = makeToken(username);
-  return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  try {
+    return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  } catch (e) {
+    return false;
+  }
 }
 
 app.use(express.json({ limit: '10mb' }));
@@ -52,7 +58,8 @@ app.post('/api/login', (req, res) => {
   }
 
   const token = makeToken(username.toLowerCase());
-  res.json({ token, username: username.toLowerCase() });
+  const isAdmin = username.toLowerCase() === ADMIN_USERNAME;
+  res.json({ token, username: username.toLowerCase(), isAdmin });
 });
 
 // ── LOGOUT ───────────────────────────────────────────────────────────────────
@@ -78,12 +85,18 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Account not found. Please contact your admin.' });
   }
 
-  req.username = username;
+  req.username = username.toLowerCase();
   next();
 }
 
-// ── FETCH URL (server-side article scraper) ───────────────────────────────────
-// Called by both Post Generator and Medium Article Generator
+function requireAdmin(req, res, next) {
+  if (req.username !== ADMIN_USERNAME) {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  next();
+}
+
+// ── FETCH URL ─────────────────────────────────────────────────────────────────
 app.post('/api/fetch-url', requireAuth, async (req, res) => {
   const { url } = req.body;
   if (!url || !url.startsWith('http')) {
@@ -105,22 +118,18 @@ app.post('/api/fetch-url', requireAuth, async (req, res) => {
 
     const html = await response.text();
 
-    // Extract og:image
     const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
     const imageUrl = ogMatch ? ogMatch[1] : null;
 
-    // Extract og:title
     const titleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
     const ogTitle = titleMatch ? titleMatch[1] : null;
 
-    // Extract meta description
     const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
     const metaDesc = descMatch ? descMatch[1] : null;
 
-    // Strip HTML to plain text
     let text = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -139,7 +148,6 @@ app.post('/api/fetch-url', requireAuth, async (req, res) => {
       .replace(/\s{2,}/g, ' ')
       .trim();
 
-    // Extract page title from <title> tag as fallback
     const pageTitleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     const pageTitle = ogTitle || (pageTitleMatch ? pageTitleMatch[1].trim() : null);
 
@@ -153,7 +161,43 @@ app.post('/api/fetch-url', requireAuth, async (req, res) => {
   }
 });
 
-// ── ANTHROPIC PROXY (protected) ───────────────────────────────────────────────
+// ── LOG A POST (called by frontend after successful generation) ───────────────
+app.post('/api/log-post', requireAuth, (req, res) => {
+  const { url, post, imageUrl, voiceName, tone, firstPerson } = req.body;
+  if (!url || !post) return res.status(400).json({ error: 'Missing url or post.' });
+
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    username: req.username,
+    url,
+    post,
+    imageUrl: imageUrl || null,
+    voiceName: voiceName || '',
+    tone: tone || '',
+    firstPerson: !!firstPerson,
+    timestamp: new Date().toISOString(),
+  };
+
+  postLog.unshift(entry); // newest first
+  if (postLog.length > MAX_LOG) postLog.length = MAX_LOG;
+
+  res.json({ ok: true });
+});
+
+// ── ADMIN: GET ALL POSTS ──────────────────────────────────────────────────────
+app.get('/api/admin/posts', requireAuth, requireAdmin, (req, res) => {
+  res.json({ posts: postLog });
+});
+
+// ── ADMIN: DELETE A POST FROM LOG ─────────────────────────────────────────────
+app.delete('/api/admin/posts/:id', requireAuth, requireAdmin, (req, res) => {
+  const idx = postLog.findIndex(p => p.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found.' });
+  postLog.splice(idx, 1);
+  res.json({ ok: true });
+});
+
+// ── ANTHROPIC PROXY ───────────────────────────────────────────────────────────
 app.post('/api/messages', requireAuth, async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set in environment variables.' });
@@ -185,4 +229,5 @@ app.listen(PORT, () => {
   const users = getUsers();
   console.log(`Truecosmic Content Studio running on port ${PORT}`);
   console.log(`Team members: ${Object.keys(users).join(', ') || 'NONE — set TEAM_USERS env var'}`);
+  console.log(`Admin username: ${ADMIN_USERNAME}`);
 });
