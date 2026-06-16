@@ -15,6 +15,7 @@
   --error-bg:rgba(138,90,90,0.14);--error:#c87a7a;
   --info-bg:rgba(74,106,138,0.14);--info:#7aaac8;
   --medium:#00ab6c;--medium-dim:rgba(0,171,108,0.12);
+  --admin:#a07de8;--admin-dim:rgba(160,125,232,0.13);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;line-height:1.6;}
@@ -31,6 +32,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .nav-item:hover{background:var(--surface2);color:var(--text);}
 .nav-item.active{background:var(--gold-dim);color:var(--gold-light);}
 .nav-item.active.medium-nav{background:var(--medium-dim);color:var(--medium);}
+.nav-item.active.admin-nav{background:var(--admin-dim);color:var(--admin);}
 .nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.75;}
 .sidebar-stats{padding:14px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:7px;}
 .stat-box{background:var(--surface2);border-radius:8px;padding:10px;}
@@ -58,6 +60,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .btn-medium{background:var(--medium);color:#fff;font-weight:500;}
 .btn-medium:hover{background:#00c97e;}
 .btn-medium:disabled{opacity:.38;cursor:not-allowed;}
+.btn-admin{background:var(--admin);color:#fff;font-weight:500;}
+.btn-admin:hover{filter:brightness(1.1);}
 
 /* Generator layout */
 .gen-body{display:grid;grid-template-columns:340px 1fr;flex:1;min-height:0;overflow:hidden;}
@@ -71,6 +75,17 @@ textarea{resize:vertical;}
 textarea:focus,input:focus,select:focus{border-color:var(--border2);}
 textarea::placeholder,input::placeholder{color:var(--text3);}
 select option{background:#1a1712;}
+
+/* Toggle switch */
+.toggle-row{display:flex;align-items:center;gap:10px;}
+.toggle-switch{position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--surface3);border-radius:22px;transition:.2s;border:1px solid var(--border2);}
+.toggle-slider:before{position:absolute;content:"";height:16px;width:16px;left:2px;bottom:2px;background:var(--text3);border-radius:50%;transition:.2s;}
+.toggle-switch input:checked + .toggle-slider{background:var(--gold-dim);border-color:var(--gold);}
+.toggle-switch input:checked + .toggle-slider:before{transform:translateX(18px);background:var(--gold-light);}
+.toggle-label{font-size:13px;color:var(--text2);line-height:1.4;}
+.toggle-label strong{color:var(--text);font-weight:500;}
 
 /* Chips */
 .chips{display:flex;flex-wrap:wrap;gap:5px;}
@@ -190,6 +205,28 @@ select option{background:#1a1712;}
 .mode-toggle{display:flex;background:var(--surface2);border-radius:8px;padding:3px;gap:2px;border:1px solid var(--border);}
 .mode-btn{flex:1;padding:5px 12px;border-radius:6px;border:none;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .13s;color:var(--text2);background:transparent;}
 .mode-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3);}
+
+/* ── ADMIN DASHBOARD ───────────────────────────────────────────── */
+.admin-body{padding:0;overflow-y:auto;flex:1;}
+.admin-filters{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);}
+.admin-filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;}
+.admin-filter-select{width:auto;flex-shrink:0;font-size:12px;padding:6px 10px;}
+.admin-stats-bar{display:flex;gap:16px;padding:14px 24px;border-bottom:1px solid var(--border);}
+.admin-stat{background:var(--surface2);border-radius:8px;padding:10px 16px;display:flex;flex-direction:column;gap:2px;}
+.admin-stat-num{font-family:'DM Serif Display',serif;font-size:20px;color:var(--admin);}
+.admin-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;}
+.admin-post-list{padding:0;}
+.admin-post-item{border-bottom:1px solid var(--border);padding:16px 24px;animation:fadeUp .2s ease;}
+.admin-post-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+.admin-member-badge{font-size:11px;font-weight:500;padding:2px 9px;border-radius:999px;background:var(--admin-dim);color:var(--admin);border:1px solid rgba(160,125,232,0.25);flex-shrink:0;}
+.admin-post-url{font-size:11px;font-family:monospace;color:var(--text3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.admin-post-time{font-size:11px;color:var(--text3);flex-shrink:0;}
+.admin-post-meta{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.admin-meta-chip{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--surface2);color:var(--text3);border:1px solid var(--border);}
+.admin-post-text{font-size:13px;line-height:1.7;color:var(--text2);white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;}
+.admin-post-actions{display:flex;gap:6px;}
+.admin-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;gap:8px;color:var(--text3);}
+.admin-loading{display:flex;align-items:center;justify-content:center;height:200px;gap:10px;color:var(--text3);font-size:13px;}
 </style>
 </head>
 <body>
@@ -215,6 +252,11 @@ select option{background:#1a1712;}
     <button class="nav-item" onclick="showView('voices',this)">
       <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
       Voice Profiles
+    </button>
+    <!-- Admin nav item — shown only when isAdmin is true -->
+    <button class="nav-item" id="adminNavBtn" onclick="showView('admin',this)" style="display:none;">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/></svg>
+      Admin Dashboard
     </button>
     <div class="nav-section">Learn</div>
     <button class="nav-item" onclick="showView('howto',this)">
@@ -272,7 +314,23 @@ select option{background:#1a1712;}
               <div class="chip" data-tone="empowering">Empowering</div>
             </div>
           </div>
-          <div class="form-hint" style="margin-top:6px;">Don't have one yet? <a href="#" onclick="showView('voices',null);return false;" style="color:var(--gold);text-decoration:none;">Create a voice profile →</a></div>
+
+          <!-- FIRST PERSON TOGGLE -->
+          <div style="margin-top:14px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;">
+            <div class="field-label" style="margin-bottom:10px;">Writing perspective</div>
+            <div class="toggle-row">
+              <label class="toggle-switch">
+                <input type="checkbox" id="firstPersonToggle" onchange="onFirstPersonChange()">
+                <span class="toggle-slider"></span>
+              </label>
+              <div class="toggle-label">
+                <strong id="firstPersonLabel">Neutral voice</strong>
+                <div id="firstPersonHint" style="font-size:11px;color:var(--text3);margin-top:1px;">Writing about "you" — addressing the reader</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-hint" style="margin-top:8px;">Don't have one yet? <a href="#" onclick="showView('voices',null);return false;" style="color:var(--gold);text-decoration:none;">Create a voice profile →</a></div>
         </div>
 
         <div>
@@ -339,25 +397,19 @@ select option{background:#1a1712;}
     </div>
 
     <div class="medium-body" style="flex:1;overflow:hidden;">
-      <!-- Input panel -->
       <div class="medium-input">
-
-        <!-- Single mode -->
         <div id="singleModeInputs">
           <div class="form-row">
             <div class="field-label">TrueCosmic Article URL</div>
             <input type="text" id="mediumUrl" placeholder="https://truecosmic.com/your-article">
           </div>
         </div>
-
-        <!-- Batch mode -->
         <div id="batchModeInputs" style="display:none;">
           <div class="form-row">
             <div class="field-label">Article URLs <span id="mediumUrlCount" style="color:var(--text3);font-size:10px;text-transform:none;letter-spacing:0;margin-left:4px;"></span></div>
             <textarea id="mediumBatchUrls" rows="10" placeholder="https://truecosmic.com/article-1&#10;https://truecosmic.com/article-2&#10;&#10;One URL per line..." oninput="countMediumUrls()"></textarea>
           </div>
         </div>
-
         <div class="form-row">
           <div class="field-label">Article style</div>
           <div class="chips" id="mediumStyleChips">
@@ -367,7 +419,6 @@ select option{background:#1a1712;}
             <div class="chip" data-mstyle="listicle">List format</div>
           </div>
         </div>
-
         <div class="form-row">
           <div class="field-label">Article length</div>
           <div class="chips" id="mediumLenChips">
@@ -376,13 +427,11 @@ select option{background:#1a1712;}
             <div class="chip" data-mlen="long">Long (1000–1200 words)</div>
           </div>
         </div>
-
         <div id="mediumProgSection" style="display:none;">
           <div class="field-label">Progress</div>
           <div class="prog-wrap"><div class="prog-fill" id="mediumProgFill" style="background:var(--medium);"></div></div>
           <div class="prog-meta"><span id="mediumProgText">Starting...</span><span id="mediumProgCount"></span></div>
         </div>
-
         <div style="background:var(--medium-dim);border:1px solid rgba(0,171,108,0.18);border-radius:10px;padding:13px 14px;">
           <div style="font-size:11px;font-weight:500;color:var(--medium);margin-bottom:5px;">What this generates</div>
           <div style="font-size:12px;color:var(--text2);line-height:1.65;">
@@ -393,10 +442,8 @@ select option{background:#1a1712;}
             ✓ Copy-ready format
           </div>
         </div>
-
       </div>
 
-      <!-- Output panel -->
       <div class="medium-output" id="mediumOutputPanel">
         <div class="medium-article-empty" id="mediumEmptyState">
           <svg width="44" height="44" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="opacity:.18;"><path d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg>
@@ -405,7 +452,6 @@ select option{background:#1a1712;}
         </div>
         <div id="mediumSingleResult" style="display:none;">
           <div class="medium-article-wrap">
-
             <div class="article-section">
               <div class="article-section-label">Canonical URL note (paste at top of Medium article)</div>
               <div class="canonical-box" id="mediumCanonical">
@@ -413,25 +459,20 @@ select option{background:#1a1712;}
                 <span class="canonical-url" id="mediumCanonicalUrl"></span>
               </div>
             </div>
-
             <div class="article-section">
               <div class="article-section-label">Full article</div>
               <div class="article-content" id="mediumArticleText"></div>
             </div>
-
             <div class="article-section">
               <div class="article-section-label">Suggested Medium tags</div>
               <div class="article-tags" id="mediumTags"></div>
             </div>
-
             <div class="result-actions" style="margin-top:8px;">
               <button class="act-btn" onclick="copyMediumArticle()">Copy full article</button>
               <button class="act-btn" onclick="copyMediumTags()">Copy tags</button>
             </div>
-
           </div>
         </div>
-        <!-- Batch queue -->
         <div id="mediumBatchResults"></div>
       </div>
     </div>
@@ -509,6 +550,41 @@ select option{background:#1a1712;}
     </div>
   </div>
 
+  <!-- ═══ ADMIN DASHBOARD VIEW ═══ -->
+  <div class="view" id="view-admin">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Admin Dashboard</div>
+        <div class="page-sub">All posts generated by the team — across all sessions</div>
+      </div>
+      <button class="btn btn-admin" onclick="loadAdminPosts()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+        Refresh
+      </button>
+    </div>
+    <div class="admin-body">
+      <div class="admin-filters">
+        <span class="admin-filter-label">Filter by member:</span>
+        <select class="admin-filter-select" id="adminMemberFilter" onchange="renderAdminPosts()">
+          <option value="">All team members</option>
+        </select>
+        <span class="admin-filter-label" style="margin-left:8px;">Perspective:</span>
+        <select class="admin-filter-select" id="adminPerspectiveFilter" onchange="renderAdminPosts()">
+          <option value="">All</option>
+          <option value="first">First person</option>
+          <option value="neutral">Neutral</option>
+        </select>
+      </div>
+      <div class="admin-stats-bar" id="adminStatsBar"></div>
+      <div id="adminPostList" class="admin-post-list">
+        <div class="admin-loading">
+          <span class="spinner" style="width:14px;height:14px;border-width:2px;border-top-color:var(--admin);border-color:rgba(160,125,232,.25);"></span>
+          Loading posts…
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ HOW TO USE VIEW ═══ -->
   <div class="view" id="view-howto">
     <div class="topbar">
@@ -524,6 +600,7 @@ select option{background:#1a1712;}
         <div class="step-card"><div class="step-num">04</div><div class="step-title">Schedule &amp; comment</div><div class="step-desc">Copy the post body into Facebook. Schedule it natively in the group. The moment it publishes, paste the article link as the very first comment.</div></div>
       </div>
       <div class="tip-box"><h4>Why link in comments?</h4><p>Facebook's algorithm actively suppresses posts with external links in the body. Putting the link as the first comment bypasses this and protects your reach.</p></div>
+      <div class="tip-box"><h4>First person toggle</h4><p>Use the "Writing perspective" toggle in the Post Generator to switch between first person ("I discovered something..." / writing as yourself) and neutral voice (addressing the reader as "you"). First person works best for Michael's posts or any team member sharing personal experience.</p></div>
       <div class="tip-box"><h4>Medium Generator tip</h4><p>Use the Medium Generator tab to turn your TrueCosmic articles into full Medium posts for GEO. Each article gets a canonical URL note, a TrueCosmic CTA, and suggested tags — copy and paste straight into Medium.</p></div>
       <div class="tip-box"><h4>Post frequency</h4><p>Even with a 95k group, 1–2 posts per day is the sweet spot. More than that and Facebook starts throttling the group's organic reach.</p></div>
     </div>
@@ -603,15 +680,34 @@ select option{background:#1a1712;}
 let voices = JSON.parse(localStorage.getItem('tc_voices') || '[]');
 let selectedLen = 'medium';
 let selectedTone = 'emotional';
+let firstPerson = false;
 let allResults = [];
 let isRunning = false;
 
 // Medium state
-let mediumMode = 'single'; // 'single' | 'batch'
+let mediumMode = 'single';
 let selectedMediumStyle = 'educational';
 let selectedMediumLen = 'medium';
 let mediumResults = [];
 let isMediumRunning = false;
+
+// Admin state
+let adminPosts = [];
+let isAdmin = false;
+
+// ─── FIRST PERSON TOGGLE ─────────────────────────────────────────────────────
+function onFirstPersonChange() {
+  firstPerson = document.getElementById('firstPersonToggle').checked;
+  const label = document.getElementById('firstPersonLabel');
+  const hint = document.getElementById('firstPersonHint');
+  if (firstPerson) {
+    label.textContent = 'First person (I...)';
+    hint.textContent = 'Writing as yourself — "I read this and..." personal voice';
+  } else {
+    label.textContent = 'Neutral voice';
+    hint.textContent = 'Writing about "you" — addressing the reader';
+  }
+}
 
 // ─── TONE CHIPS ──────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-tone]').forEach(c => {
@@ -650,14 +746,16 @@ document.querySelectorAll('[data-mlen]').forEach(c => {
 // ─── NAV ─────────────────────────────────────────────────────────────────────
 function showView(name, el) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => { n.classList.remove('active'); n.classList.remove('medium-nav'); });
+  document.querySelectorAll('.nav-item').forEach(n => { n.classList.remove('active'); n.classList.remove('medium-nav'); n.classList.remove('admin-nav'); });
   document.getElementById('view-' + name).classList.add('active');
   if (el) {
     el.classList.add('active');
     if (name === 'medium') el.classList.add('medium-nav');
+    if (name === 'admin') el.classList.add('admin-nav');
   }
   if (name === 'voices') renderVoiceGrid();
   if (name === 'generator') populateVoiceSelect();
+  if (name === 'admin') loadAdminPosts();
 }
 
 // ─── MEDIUM MODE TOGGLE ──────────────────────────────────────────────────────
@@ -682,7 +780,6 @@ function getMediumBatchUrls() {
 // ─── MEDIUM GENERATE ─────────────────────────────────────────────────────────
 async function startMedium() {
   if (isMediumRunning) return;
-
   if (mediumMode === 'single') {
     const url = document.getElementById('mediumUrl').value.trim();
     if (!url || !url.startsWith('http')) { alert('Please paste a valid TrueCosmic URL.'); return; }
@@ -784,7 +881,6 @@ const MEDIUM_STYLE_MAP = {
 };
 
 async function generateMediumArticle(url) {
-  // Step 1 — fetch the article
   const fetchRes = await fetch('/api/fetch-url', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -794,7 +890,6 @@ async function generateMediumArticle(url) {
   if (!fetchRes.ok) throw new Error(fetchData.error || 'Could not fetch article');
   const { text: articleText, title: articleTitle } = fetchData;
 
-  // Step 2 — generate the Medium article
   const lengthNote = MEDIUM_LENGTH_MAP[selectedMediumLen];
   const styleNote = MEDIUM_STYLE_MAP[selectedMediumStyle];
 
@@ -835,7 +930,7 @@ ${articleText.slice(0, 5000)}`;
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
@@ -849,13 +944,11 @@ ${articleText.slice(0, 5000)}`;
 
   const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
 
-  // Parse JSON response
   let parsed;
   try {
     const clean = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     parsed = JSON.parse(clean);
   } catch(e) {
-    // Fallback: treat whole response as article
     parsed = { title: articleTitle || 'Article', article: raw, tags: ['Law of Assumption', 'Neville Goddard', 'Manifestation', 'Spirituality', 'Personal Development'] };
   }
 
@@ -1101,6 +1194,10 @@ async function startGen() {
       const { post, imageUrl } = await fetchAndGenerate(url, voice);
       doneCard(cardId, url, post, imageUrl);
       allResults.push({ url, post, imageUrl, error: null });
+
+      // Log post to server for admin dashboard
+      logPost({ url, post, imageUrl, voiceName: voice.name, tone: selectedTone, firstPerson });
+
       ready++;
     } catch (e) {
       errorCard(cardId, url, e.message || 'Failed');
@@ -1120,6 +1217,19 @@ async function startGen() {
   }
 }
 
+// ─── LOG POST TO SERVER ───────────────────────────────────────────────────────
+async function logPost(data) {
+  try {
+    await fetch('/api/log-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch(e) {
+    // Non-critical — silently fail
+  }
+}
+
 function setProgress(done, total, text) {
   document.getElementById('progFill').style.width = (total ? Math.round((done / total) * 100) : 0) + '%';
   document.getElementById('progText').textContent = text;
@@ -1135,11 +1245,20 @@ const LENGTH_MAP = {
 function buildSystemPrompt(voice) {
   let prompt = `You write Facebook posts for Truecosmic.com, a spiritual growth and manifestation private Facebook group with 95,000 members.\n\n`;
   prompt += `You are writing in the voice of ${voice.name}.\n\n`;
+
+  // First person instruction
+  if (firstPerson) {
+    prompt += `PERSPECTIVE: Write in FIRST PERSON. The writer is speaking as themselves — using "I", "me", "my". They are sharing their own thoughts, experiences, and discoveries. For example: "I read something today that stopped me in my tracks..." or "Something clicked for me when I came across this..." — personal, authentic, like they wrote it themselves.\n\n`;
+  } else {
+    prompt += `PERSPECTIVE: Write in SECOND PERSON / NEUTRAL VOICE. Address the reader as "you". Speak to their experience, their situation. For example: "You already know this, you just keep forgetting it." or "Stop waiting for him to choose you."\n\n`;
+  }
+
   if (voice.style) prompt += `THEIR WRITING STYLE:\n${voice.style}\n\n`;
   if (voice.examples) prompt += `EXAMPLE PHRASES THEY ACTUALLY USE:\n${voice.examples}\n\n`;
   if (voice.goodWords) prompt += `WORDS AND SLANG THEY USE FREELY (use these naturally, don't shy away):\n${voice.goodWords}\n\n`;
   if (voice.badWords) prompt += `WORDS TO NEVER USE:\n${voice.badWords}\n\n`;
   if (voice.notes) prompt += `ADDITIONAL NOTES:\n${voice.notes}\n\n`;
+
   const toneInstructions = {
     emotional: 'Write with raw emotion. Hook them in the first line with something they feel in their chest.',
     inspirational: 'Write to lift people up. Remind them of their strength.',
@@ -1149,6 +1268,7 @@ function buildSystemPrompt(voice) {
     empowering: 'Write to activate their power. Shift them from feeling stuck to feeling like the creator of their reality.'
   };
   if (toneInstructions[selectedTone]) prompt += `TONE INSTRUCTION: ${toneInstructions[selectedTone]}\n\n`;
+
   prompt += `FORMAT RULES:
 - Hook the reader in the very first sentence
 - No hashtags, no emojis
@@ -1176,7 +1296,7 @@ async function fetchAndGenerate(url, voice) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       system,
       messages: [{ role: 'user', content: `${lengthNote}\n\nWrite the Facebook post based on this article content:\n\n${articleText.slice(0, 4000)}` }]
@@ -1283,6 +1403,98 @@ function updateStats(gen, ready) {
   document.getElementById('stat-ready').textContent = ready;
 }
 
+// ─── ADMIN DASHBOARD ──────────────────────────────────────────────────────────
+async function loadAdminPosts() {
+  if (!isAdmin) return;
+  document.getElementById('adminPostList').innerHTML = `
+    <div class="admin-loading">
+      <span class="spinner" style="width:14px;height:14px;border-width:2px;border-top-color:var(--admin);border-color:rgba(160,125,232,.25);"></span>
+      Loading posts…
+    </div>`;
+
+  try {
+    const res = await fetch('/api/admin/posts');
+    if (!res.ok) { throw new Error('Access denied'); }
+    const data = await res.json();
+    adminPosts = data.posts || [];
+
+    // Populate member filter
+    const members = [...new Set(adminPosts.map(p => p.username))].sort();
+    const filterSel = document.getElementById('adminMemberFilter');
+    filterSel.innerHTML = '<option value="">All team members</option>' +
+      members.map(m => `<option value="${m}">${m}</option>`).join('');
+
+    renderAdminPosts();
+  } catch(e) {
+    document.getElementById('adminPostList').innerHTML = `
+      <div class="admin-empty"><p style="color:var(--error);">Could not load posts: ${e.message}</p></div>`;
+  }
+}
+
+function renderAdminPosts() {
+  const memberFilter = document.getElementById('adminMemberFilter').value;
+  const perspFilter = document.getElementById('adminPerspectiveFilter').value;
+
+  let filtered = adminPosts;
+  if (memberFilter) filtered = filtered.filter(p => p.username === memberFilter);
+  if (perspFilter === 'first') filtered = filtered.filter(p => p.firstPerson);
+  if (perspFilter === 'neutral') filtered = filtered.filter(p => !p.firstPerson);
+
+  // Stats bar
+  const statsBar = document.getElementById('adminStatsBar');
+  const members = [...new Set(adminPosts.map(p => p.username))];
+  statsBar.innerHTML = `
+    <div class="admin-stat"><div class="admin-stat-num">${adminPosts.length}</div><div class="admin-stat-label">Total posts</div></div>
+    <div class="admin-stat"><div class="admin-stat-num">${members.length}</div><div class="admin-stat-label">Team members</div></div>
+    <div class="admin-stat"><div class="admin-stat-num">${adminPosts.filter(p => p.firstPerson).length}</div><div class="admin-stat-label">First person</div></div>
+    <div class="admin-stat"><div class="admin-stat-num">${filtered.length}</div><div class="admin-stat-label">Showing</div></div>`;
+
+  const list = document.getElementById('adminPostList');
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="admin-empty"><p>No posts yet — generate some posts in the Post Generator.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(p => {
+    const ts = new Date(p.timestamp);
+    const timeStr = ts.toLocaleDateString('en-GB', { day:'numeric', month:'short' }) + ' · ' +
+      ts.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    const postEscaped = (p.post || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const safePost = (p.post || '').replace(/\\/g,'\\\\').replace(/`/g,'\\`');
+    return `
+      <div class="admin-post-item">
+        <div class="admin-post-header">
+          <span class="admin-member-badge">${p.username}</span>
+          <span class="admin-post-url">${p.url}</span>
+          <span class="admin-post-time">${timeStr}</span>
+        </div>
+        <div class="admin-post-meta">
+          ${p.voiceName ? `<span class="admin-meta-chip">Voice: ${p.voiceName}</span>` : ''}
+          ${p.tone ? `<span class="admin-meta-chip">Tone: ${p.tone}</span>` : ''}
+          <span class="admin-meta-chip">${p.firstPerson ? '1st person' : 'Neutral'}</span>
+        </div>
+        <div class="admin-post-text">${postEscaped}</div>
+        <div class="admin-post-actions">
+          <button class="act-btn" onclick="doCopy(this,\`${safePost}\`)">Copy post</button>
+          <button class="act-btn" onclick="doCopy(this,'${p.url.replace(/'/g,"\\'")}')">Copy URL</button>
+          <button class="act-btn" style="color:var(--error);border-color:var(--error-bg);" onclick="adminDeletePost('${p.id}', this)">Remove</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function adminDeletePost(id, btn) {
+  if (!confirm('Remove this post from the log?')) return;
+  try {
+    const res = await fetch(`/api/admin/posts/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      adminPosts = adminPosts.filter(p => p.id !== id);
+      renderAdminPosts();
+    }
+  } catch(e) {}
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 populateVoiceSelect();
 renderVoiceGrid();
@@ -1327,6 +1539,7 @@ renderVoiceGrid();
 
   const token = localStorage.getItem('tc_token');
   const username = localStorage.getItem('tc_username');
+  const storedAdmin = localStorage.getItem('tc_isAdmin') === 'true';
 
   if (!token) {
     document.addEventListener('DOMContentLoaded', () => {
@@ -1337,7 +1550,13 @@ renderVoiceGrid();
     });
   } else {
     patchFetch(token);
-    document.addEventListener('DOMContentLoaded', () => addLogoutButton(username));
+    document.addEventListener('DOMContentLoaded', () => {
+      addLogoutButton(username);
+      if (storedAdmin) {
+        isAdmin = true;
+        document.getElementById('adminNavBtn').style.display = 'flex';
+      }
+    });
   }
 
   window.doLogin = async function() {
@@ -1359,9 +1578,14 @@ renderVoiceGrid();
       if (!res.ok) { showErr(data.error || 'Login failed.'); btn.textContent = 'Sign in'; btn.disabled = false; return; }
       localStorage.setItem('tc_token', data.token);
       localStorage.setItem('tc_username', data.username);
+      localStorage.setItem('tc_isAdmin', data.isAdmin ? 'true' : 'false');
       patchFetch(data.token);
       document.getElementById('loginOverlay').remove();
       addLogoutButton(data.username);
+      if (data.isAdmin) {
+        isAdmin = true;
+        document.getElementById('adminNavBtn').style.display = 'flex';
+      }
     } catch(e) {
       showErr('Could not connect to server.');
       btn.textContent = 'Sign in';
@@ -1377,7 +1601,7 @@ renderVoiceGrid();
   function patchFetch(token) {
     const origFetch = window.fetch;
     window.fetch = function(url, opts = {}) {
-      if (typeof url === 'string' && (url.includes('/api/messages') || url.includes('/api/fetch-url'))) {
+      if (typeof url === 'string' && (url.includes('/api/messages') || url.includes('/api/fetch-url') || url.includes('/api/log-post') || url.includes('/api/admin'))) {
         opts = Object.assign({}, opts);
         opts.headers = Object.assign({}, opts.headers || {});
         opts.headers['x-session-token'] = token;
@@ -1391,6 +1615,7 @@ renderVoiceGrid();
             if (data.error && data.error.includes('authenticated')) {
               localStorage.removeItem('tc_token');
               localStorage.removeItem('tc_username');
+              localStorage.removeItem('tc_isAdmin');
               location.reload();
             }
           } catch(e) {}
@@ -1404,7 +1629,7 @@ renderVoiceGrid();
     const topbar = document.querySelector('.topbar');
     if (!topbar) return;
     const el = document.createElement('div');
-    el.style.cssText = 'display:flex;align-items:center;gap:12px;margin-left:auto;';
+    el.style.cssText = 'display:flex;align-items:center;gap:12px;margin-left:auto;flex-shrink:0;';
     el.innerHTML = `
       <span style="font-size:12px;color:#5c5448;">Signed in as <strong style="color:#9a8e7a;">${username}</strong></span>
       <button onclick="doLogout()" style="
@@ -1419,6 +1644,7 @@ renderVoiceGrid();
     await fetch('/api/logout', { method: 'POST', headers: { 'x-session-token': token } }).catch(()=>{});
     localStorage.removeItem('tc_token');
     localStorage.removeItem('tc_username');
+    localStorage.removeItem('tc_isAdmin');
     location.reload();
   };
 })();
