@@ -5,18 +5,15 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-
-// Admin username (set via env or default to 'michael')
 const ADMIN_USERNAME = (process.env.ADMIN_USERNAME || 'michael').toLowerCase();
 
-// In-memory post log (survives until server restart — good enough for daily use)
-const postLog = []; // { id, username, url, post, imageUrl, voiceName, timestamp }
-const MAX_LOG = 500;
-
+// Use ANTHROPIC_API_KEY as signing secret so no extra env var needed
 function getSecret() {
   return ANTHROPIC_API_KEY || 'fallback-secret-change-me';
 }
 
+// Parse team users from env var
+// Format: TEAM_USERS=lauren:pass123,sarah:pass456
 function getUsers() {
   const raw = process.env.TEAM_USERS || '';
   const users = {};
@@ -27,19 +24,42 @@ function getUsers() {
   return users;
 }
 
+// Generate a persistent token — survives server restarts
 function makeToken(username) {
   const payload = `${username}:${getSecret()}`;
   return crypto.createHmac('sha256', getSecret()).update(payload).digest('hex');
 }
 
+// Verify token without any stored state
 function verifyToken(token, username) {
   if (!token || !username) return false;
   const expected = makeToken(username);
-  try {
-    return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
-  } catch (e) {
-    return false;
+  return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+}
+
+function isAdmin(username) {
+  return !!username && username.toLowerCase() === ADMIN_USERNAME;
+}
+
+// ── IN-MEMORY POST LOG (capped at 500 entries) ───────────────────────────────
+// Populated on every successful generation (Facebook posts + Medium articles).
+// Not persisted across restarts/deploys — this is a lightweight visibility
+// log for the admin dashboard, not a system of record.
+const POST_LOG_CAP = 500;
+let postLog = [];
+let postLogSeq = 1;
+
+function logPost(entry) {
+  const record = {
+    id: postLogSeq++,
+    timestamp: new Date().toISOString(),
+    ...entry,
+  };
+  postLog.push(record);
+  if (postLog.length > POST_LOG_CAP) {
+    postLog = postLog.slice(postLog.length - POST_LOG_CAP);
   }
+  return record;
 }
 
 app.use(express.json({ limit: '10mb' }));
@@ -58,8 +78,7 @@ app.post('/api/login', (req, res) => {
   }
 
   const token = makeToken(username.toLowerCase());
-  const isAdmin = username.toLowerCase() === ADMIN_USERNAME;
-  res.json({ token, username: username.toLowerCase(), isAdmin });
+  res.json({ token, username: username.toLowerCase(), isAdmin: isAdmin(username) });
 });
 
 // ── LOGOUT ───────────────────────────────────────────────────────────────────
@@ -89,14 +108,16 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// ── ADMIN MIDDLEWARE (chain after requireAuth) ───────────────────────────────
 function requireAdmin(req, res, next) {
-  if (req.username !== ADMIN_USERNAME) {
+  if (!isAdmin(req.username)) {
     return res.status(403).json({ error: 'Admin access required.' });
   }
   next();
 }
 
-// ── FETCH URL ─────────────────────────────────────────────────────────────────
+// ── FETCH URL (server-side article scraper) ───────────────────────────────────
+// Called by both Post Generator and Medium Article Generator
 app.post('/api/fetch-url', requireAuth, async (req, res) => {
   const { url } = req.body;
   if (!url || !url.startsWith('http')) {
@@ -118,18 +139,22 @@ app.post('/api/fetch-url', requireAuth, async (req, res) => {
 
     const html = await response.text();
 
+    // Extract og:image
     const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
     const imageUrl = ogMatch ? ogMatch[1] : null;
 
+    // Extract og:title
     const titleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
     const ogTitle = titleMatch ? titleMatch[1] : null;
 
+    // Extract meta description
     const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
     const metaDesc = descMatch ? descMatch[1] : null;
 
+    // Strip HTML to plain text
     let text = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -148,6 +173,7 @@ app.post('/api/fetch-url', requireAuth, async (req, res) => {
       .replace(/\s{2,}/g, ' ')
       .trim();
 
+    // Extract page title from <title> tag as fallback
     const pageTitleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     const pageTitle = ogTitle || (pageTitleMatch ? pageTitleMatch[1].trim() : null);
 
@@ -161,43 +187,7 @@ app.post('/api/fetch-url', requireAuth, async (req, res) => {
   }
 });
 
-// ── LOG A POST (called by frontend after successful generation) ───────────────
-app.post('/api/log-post', requireAuth, (req, res) => {
-  const { url, post, imageUrl, voiceName, tone, firstPerson } = req.body;
-  if (!url || !post) return res.status(400).json({ error: 'Missing url or post.' });
-
-  const entry = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    username: req.username,
-    url,
-    post,
-    imageUrl: imageUrl || null,
-    voiceName: voiceName || '',
-    tone: tone || '',
-    firstPerson: !!firstPerson,
-    timestamp: new Date().toISOString(),
-  };
-
-  postLog.unshift(entry); // newest first
-  if (postLog.length > MAX_LOG) postLog.length = MAX_LOG;
-
-  res.json({ ok: true });
-});
-
-// ── ADMIN: GET ALL POSTS ──────────────────────────────────────────────────────
-app.get('/api/admin/posts', requireAuth, requireAdmin, (req, res) => {
-  res.json({ posts: postLog });
-});
-
-// ── ADMIN: DELETE A POST FROM LOG ─────────────────────────────────────────────
-app.delete('/api/admin/posts/:id', requireAuth, requireAdmin, (req, res) => {
-  const idx = postLog.findIndex(p => p.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Not found.' });
-  postLog.splice(idx, 1);
-  res.json({ ok: true });
-});
-
-// ── ANTHROPIC PROXY ───────────────────────────────────────────────────────────
+// ── ANTHROPIC PROXY (protected) ───────────────────────────────────────────────
 app.post('/api/messages', requireAuth, async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set in environment variables.' });
@@ -218,6 +208,76 @@ app.post('/api/messages', requireAuth, async (req, res) => {
     console.error('Anthropic proxy error:', err);
     res.status(500).json({ error: 'Failed to reach Anthropic API.' });
   }
+});
+
+// ── POST LOG (protected — any authenticated team member can write their own activity) ─
+// Called by the frontend after a successful generation (FB post or Medium article)
+// so the Super Admin Dashboard has visibility into team activity.
+app.post('/api/log-post', requireAuth, (req, res) => {
+  const {
+    type,          // 'facebook' | 'medium'
+    url,
+    title,
+    voiceName,     // team member display name used for the generation
+    perspective,   // 'first' | 'neutral'
+    language,      // 'en' | 'es'
+    preview,       // short text preview for the dashboard list
+  } = req.body || {};
+
+  if (!type || (type !== 'facebook' && type !== 'medium')) {
+    return res.status(400).json({ error: 'Invalid log entry type.' });
+  }
+
+  const record = logPost({
+    type,
+    url: url || null,
+    title: title || null,
+    voiceName: voiceName || null,
+    perspective: perspective === 'first' ? 'first' : 'neutral',
+    language: language === 'es' ? 'es' : 'en',
+    preview: (preview || '').slice(0, 240),
+    author: req.username,
+  });
+
+  res.json({ ok: true, id: record.id });
+});
+
+// ── SUPER ADMIN DASHBOARD (admin only) ───────────────────────────────────────
+app.get('/api/admin/posts', requireAuth, requireAdmin, (req, res) => {
+  const { teamMember, perspective, language, type } = req.query;
+
+  let results = postLog;
+  if (teamMember) {
+    results = results.filter(p => (p.voiceName || '').toLowerCase() === String(teamMember).toLowerCase());
+  }
+  if (perspective) {
+    results = results.filter(p => p.perspective === perspective);
+  }
+  if (language) {
+    results = results.filter(p => p.language === language);
+  }
+  if (type) {
+    results = results.filter(p => p.type === type);
+  }
+
+  // Most recent first
+  const sorted = [...results].sort((a, b) => b.id - a.id);
+
+  res.json({
+    posts: sorted,
+    total: postLog.length,
+    filtered: sorted.length,
+  });
+});
+
+app.delete('/api/admin/posts/:id', requireAuth, requireAdmin, (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const before = postLog.length;
+  postLog = postLog.filter(p => p.id !== id);
+  if (postLog.length === before) {
+    return res.status(404).json({ error: 'Entry not found.' });
+  }
+  res.json({ ok: true });
 });
 
 // ── FALLBACK ──────────────────────────────────────────────────────────────────
