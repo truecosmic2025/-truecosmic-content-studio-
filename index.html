@@ -330,6 +330,21 @@ select option{background:#1a1712;}
             </div>
           </div>
 
+          <!-- LANGUAGE TOGGLE -->
+          <div style="margin-top:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;">
+            <div class="field-label" style="margin-bottom:10px;">Language</div>
+            <div class="toggle-row">
+              <label class="toggle-switch">
+                <input type="checkbox" id="genLangToggle" onchange="onGenLangToggle()">
+                <span class="toggle-slider"></span>
+              </label>
+              <div class="toggle-label">
+                <strong>🇬🇧 English</strong>
+                <div id="genLangSub" style="font-size:11px;color:var(--text3);margin-top:1px;">Toggle for Spanish posts</div>
+              </div>
+            </div>
+          </div>
+
           <div class="form-hint" style="margin-top:8px;">Don't have one yet? <a href="#" onclick="showView('voices',null);return false;" style="color:var(--gold);text-decoration:none;">Create a voice profile →</a></div>
         </div>
 
@@ -432,6 +447,21 @@ select option{background:#1a1712;}
           <div class="prog-wrap"><div class="prog-fill" id="mediumProgFill" style="background:var(--medium);"></div></div>
           <div class="prog-meta"><span id="mediumProgText">Starting...</span><span id="mediumProgCount"></span></div>
         </div>
+        <!-- MEDIUM LANGUAGE TOGGLE -->
+        <div style="padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;">
+          <div class="field-label" style="margin-bottom:10px;">Language</div>
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="mediumLangToggle" onchange="onMediumLangToggle()">
+              <span class="toggle-slider"></span>
+            </label>
+            <div class="toggle-label">
+              <strong>🇬🇧 English</strong>
+              <div id="mediumLangSub" style="font-size:11px;color:var(--text3);margin-top:1px;">Toggle for Spanish articles</div>
+            </div>
+          </div>
+        </div>
+
         <div style="background:var(--medium-dim);border:1px solid rgba(0,171,108,0.18);border-radius:10px;padding:13px 14px;">
           <div style="font-size:11px;font-weight:500;color:var(--medium);margin-bottom:5px;">What this generates</div>
           <div style="font-size:12px;color:var(--text2);line-height:1.65;">
@@ -681,6 +711,8 @@ let voices = JSON.parse(localStorage.getItem('tc_voices') || '[]');
 let selectedLen = 'medium';
 let selectedTone = 'emotional';
 let firstPerson = false;
+let genLanguage = 'en';      // 'en' | 'es' — Post Generator
+let mediumLanguage = 'en';   // 'en' | 'es' — Medium Generator
 let allResults = [];
 let isRunning = false;
 
@@ -707,6 +739,21 @@ function onFirstPersonChange() {
     label.textContent = 'Neutral voice';
     hint.textContent = 'Writing about "you" — addressing the reader';
   }
+}
+
+// ─── LANGUAGE TOGGLES ────────────────────────────────────────────────────────
+function onGenLangToggle() {
+  genLanguage = document.getElementById('genLangToggle').checked ? 'es' : 'en';
+  document.getElementById('genLangSub').innerHTML = genLanguage === 'es'
+    ? '🇪🇸 Spanish'
+    : '🇬🇧 English';
+}
+
+function onMediumLangToggle() {
+  mediumLanguage = document.getElementById('mediumLangToggle').checked ? 'es' : 'en';
+  document.getElementById('mediumLangSub').innerHTML = mediumLanguage === 'es'
+    ? '🇪🇸 Spanish'
+    : '🇬🇧 English';
 }
 
 // ─── TONE CHIPS ──────────────────────────────────────────────────────────────
@@ -893,6 +940,10 @@ async function generateMediumArticle(url) {
   const lengthNote = MEDIUM_LENGTH_MAP[selectedMediumLen];
   const styleNote = MEDIUM_STYLE_MAP[selectedMediumStyle];
 
+  const langInstruction = mediumLanguage === 'es'
+    ? 'Write the entire article in Spanish. Natural, native-level Spanish — not a translation. Do not include any English.'
+    : 'Write in English.';
+
   const systemPrompt = `You are a writer for TrueCosmic, a Neville Goddard and Law of Assumption platform with 95,000+ community members. You write high-quality articles for Medium that establish TrueCosmic as an authority on manifestation, consciousness, and Neville Goddard's teachings.
 
 Your articles must:
@@ -903,6 +954,7 @@ Your articles must:
 - Sound like a knowledgeable human writer, never like AI
 
 Style: ${styleNote}
+Language: ${langInstruction}
 
 IMPORTANT: Respond with a JSON object with exactly these fields:
 {
@@ -1258,6 +1310,13 @@ function buildSystemPrompt(voice) {
   if (voice.goodWords) prompt += `WORDS AND SLANG THEY USE FREELY (use these naturally, don't shy away):\n${voice.goodWords}\n\n`;
   if (voice.badWords) prompt += `WORDS TO NEVER USE:\n${voice.badWords}\n\n`;
   if (voice.notes) prompt += `ADDITIONAL NOTES:\n${voice.notes}\n\n`;
+
+  // Language instruction
+  if (genLanguage === 'es') {
+    prompt += `LANGUAGE: Write the entire post in Spanish. Natural, native-level Spanish — not a translation, not formal. The kind of Spanish a real person uses when they're passionate about something. Do not include any English.
+
+`;
+  }
 
   const toneInstructions = {
     emotional: 'Write with raw emotion. Hook them in the first line with something they feel in their chest.',
