@@ -116,6 +116,65 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// ── ARTICLE SCRAPER (shared by /api/fetch-url and automation) ────────────────
+async function scrapeArticle(url) {
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; TrueCosmic-ContentStudio/1.0)',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    },
+    signal: AbortSignal.timeout(12000),
+  });
+
+  if (!response.ok) {
+    const err = new Error(`Could not fetch article (HTTP ${response.status})`);
+    err.status = 502;
+    throw err;
+  }
+
+  const html = await response.text();
+
+  // Extract og:image
+  const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+    || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+  const imageUrl = ogMatch ? ogMatch[1] : null;
+
+  // Extract og:title
+  const titleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
+    || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
+  const ogTitle = titleMatch ? titleMatch[1] : null;
+
+  // Extract meta description
+  const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
+    || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
+  const metaDesc = descMatch ? descMatch[1] : null;
+
+  // Strip HTML to plain text
+  let text = html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+    .replace(/<header[\s\S]*?<\/header>/gi, '')
+    .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+    .replace(/<aside[\s\S]*?<\/aside>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  // Extract page title from <title> tag as fallback
+  const pageTitleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  const pageTitle = ogTitle || (pageTitleMatch ? pageTitleMatch[1].trim() : null);
+
+  return { text, imageUrl, title: pageTitle, metaDesc };
+}
+
 // ── FETCH URL (server-side article scraper) ───────────────────────────────────
 // Called by both Post Generator and Medium Article Generator
 app.post('/api/fetch-url', requireAuth, async (req, res) => {
@@ -125,61 +184,12 @@ app.post('/api/fetch-url', requireAuth, async (req, res) => {
   }
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; TrueCosmic-ContentStudio/1.0)',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      },
-      signal: AbortSignal.timeout(12000),
-    });
-
-    if (!response.ok) {
-      return res.status(502).json({ error: `Could not fetch article (HTTP ${response.status})` });
-    }
-
-    const html = await response.text();
-
-    // Extract og:image
-    const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
-    const imageUrl = ogMatch ? ogMatch[1] : null;
-
-    // Extract og:title
-    const titleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
-      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
-    const ogTitle = titleMatch ? titleMatch[1] : null;
-
-    // Extract meta description
-    const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
-      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
-    const metaDesc = descMatch ? descMatch[1] : null;
-
-    // Strip HTML to plain text
-    let text = html
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<nav[\s\S]*?<\/nav>/gi, '')
-      .replace(/<header[\s\S]*?<\/header>/gi, '')
-      .replace(/<footer[\s\S]*?<\/footer>/gi, '')
-      .replace(/<aside[\s\S]*?<\/aside>/gi, '')
-      .replace(/<!--[\s\S]*?-->/g, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-
-    // Extract page title from <title> tag as fallback
-    const pageTitleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    const pageTitle = ogTitle || (pageTitleMatch ? pageTitleMatch[1].trim() : null);
-
-    res.json({ text, imageUrl, title: pageTitle, metaDesc });
+    res.json(await scrapeArticle(url));
   } catch (err) {
     console.error('fetch-url error:', err.message);
+    if (err.status === 502) {
+      return res.status(502).json({ error: err.message });
+    }
     if (err.name === 'TimeoutError') {
       return res.status(504).json({ error: 'Article took too long to load. Try again.' });
     }
@@ -278,6 +288,173 @@ app.delete('/api/admin/posts/:id', requireAuth, requireAdmin, (req, res) => {
     return res.status(404).json({ error: 'Entry not found.' });
   }
   res.json({ ok: true });
+});
+
+// ── AUTOMATION: MEDIUM ARTICLE GENERATION (headless) ─────────────────────────
+// Server-side port of generateMediumArticle() from index.html. Prompt, maps,
+// model, token limit and parse fallback are copied verbatim — keep them in
+// sync if the frontend version changes.
+//
+// Auth: AUTOMATION_KEY env var, sent as `x-automation-key: <key>` or
+// `Authorization: Bearer <key>`. This is a dedicated secret for scheduled /
+// headless callers — it is NOT a team member password and grants access to
+// this endpoint only. If AUTOMATION_KEY is unset the endpoint is disabled.
+const AUTOMATION_KEY = process.env.AUTOMATION_KEY;
+
+const MEDIUM_LENGTH_MAP = {
+  short: 'Write 400 to 600 words.',
+  medium: 'Write 700 to 900 words.',
+  long: 'Write 1000 to 1200 words.'
+};
+
+const MEDIUM_STYLE_MAP = {
+  educational: 'Write as an educational, authoritative explainer. Clear headings, facts, practical insights.',
+  personal: 'Write with a personal, first-person narrative style. Relatable, warm, story-driven.',
+  howto: 'Write as a practical how-to guide. Step-by-step, actionable, easy to follow.',
+  listicle: 'Write in a list format with clear numbered points or subheadings. Scannable and punchy.'
+};
+
+function requireAutomationKey(req, res, next) {
+  if (!AUTOMATION_KEY) {
+    return res.status(503).json({ error: 'Automation is disabled (AUTOMATION_KEY not set).' });
+  }
+  const auth = req.headers['authorization'] || '';
+  const provided = req.headers['x-automation-key']
+    || (auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '');
+  if (!provided) {
+    return res.status(401).json({ error: 'Missing automation key.' });
+  }
+  // Compare fixed-length digests so length differences don't leak or throw
+  const a = crypto.createHash('sha256').update(String(provided)).digest();
+  const b = crypto.createHash('sha256').update(AUTOMATION_KEY).digest();
+  if (!crypto.timingSafeEqual(a, b)) {
+    return res.status(401).json({ error: 'Invalid automation key.' });
+  }
+  next();
+}
+
+async function generateMediumArticleServer(url, { style = 'educational', length = 'medium', language = 'en' } = {}) {
+  const { text: articleText, title: articleTitle, imageUrl } = await scrapeArticle(url);
+
+  const lengthNote = MEDIUM_LENGTH_MAP[length];
+  const styleNote = MEDIUM_STYLE_MAP[style];
+
+  const langInstruction = language === 'es'
+    ? 'Write the entire article in Spanish. Natural, native-level Spanish — not a translation. Do not include any English.'
+    : 'Write in English.';
+
+  const systemPrompt = `You are a writer for TrueCosmic, a Neville Goddard and Law of Assumption platform with 95,000+ community members. You write high-quality articles for Medium that establish TrueCosmic as an authority on manifestation, consciousness, and Neville Goddard's teachings.
+
+Your articles must:
+- Be written in clear, engaging prose that works well on Medium
+- Establish genuine authority on the topic
+- Be SEO and GEO-friendly — written so AI models like ChatGPT and Perplexity would cite them as an answer to related questions
+- End with a natural call to action directing readers to TrueCosmic.com
+- Sound like a knowledgeable human writer, never like AI
+
+Style: ${styleNote}
+Language: ${langInstruction}
+
+IMPORTANT: Respond with a JSON object with exactly these fields:
+{
+  "title": "The article title",
+  "article": "The full article text with proper paragraph breaks using \\n\\n",
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
+}
+
+The article field should be the complete article including the title at the top, all body paragraphs, and this exact CTA at the end:
+
+---
+
+*This article was originally published on [TrueCosmic.com](https://truecosmic.com) — a platform dedicated to Neville Goddard's teachings and the Law of Assumption. Explore our full library of lectures, guided meditations, and manifestation tools.*
+
+The tags should be 5 relevant Medium tags from: Law of Assumption, Neville Goddard, Manifestation, Spirituality, Personal Development, Self Improvement, Consciousness, Mental Health, Psychology, Mindfulness, Life Lessons, Motivation, Relationships, Love, Self Love`;
+
+  const userPrompt = `${lengthNote}
+
+Rewrite the following TrueCosmic article for Medium. Keep the core content and insights but rewrite it as a standalone Medium piece. The original article URL is: ${url}
+
+ORIGINAL ARTICLE CONTENT:
+${articleText.slice(0, 5000)}`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+
+  const data = await res.json();
+  if (!data.content || !Array.isArray(data.content)) {
+    throw new Error(data.error?.message || data.error || 'API error');
+  }
+
+  const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
+
+  let parsed;
+  try {
+    const clean = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+    parsed = JSON.parse(clean);
+  } catch(e) {
+    parsed = { title: articleTitle || 'Article', article: raw, tags: ['Law of Assumption', 'Neville Goddard', 'Manifestation', 'Spirituality', 'Personal Development'] };
+  }
+
+  return { ...parsed, imageUrl, sourceTitle: articleTitle };
+}
+
+app.post('/api/automation/medium-generate', requireAutomationKey, async (req, res) => {
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set in environment variables.' });
+  }
+  const { url, style = 'educational', length = 'medium', language = 'en' } = req.body || {};
+  if (!url || !String(url).startsWith('http')) {
+    return res.status(400).json({ error: 'Invalid URL.' });
+  }
+  if (!MEDIUM_STYLE_MAP[style]) {
+    return res.status(400).json({ error: `Invalid style. Use one of: ${Object.keys(MEDIUM_STYLE_MAP).join(', ')}` });
+  }
+  if (!MEDIUM_LENGTH_MAP[length]) {
+    return res.status(400).json({ error: `Invalid length. Use one of: ${Object.keys(MEDIUM_LENGTH_MAP).join(', ')}` });
+  }
+  const lang = language === 'es' ? 'es' : 'en';
+
+  try {
+    const result = await generateMediumArticleServer(url, { style, length, language: lang });
+
+    const record = logPost({
+      type: 'medium',
+      url,
+      title: result.title || result.sourceTitle || null,
+      voiceName: null,
+      perspective: 'neutral',
+      language: lang,
+      preview: (result.article || '').slice(0, 240),
+      author: 'automation',
+    });
+
+    res.json({
+      ok: true,
+      logId: record.id,
+      canonicalUrl: url,
+      title: result.title || null,
+      article: result.article || '',
+      tags: result.tags || [],
+      imageUrl: result.imageUrl || null,
+    });
+  } catch (err) {
+    console.error('automation/medium-generate error:', err.message);
+    if (err.status === 502) return res.status(502).json({ error: err.message });
+    if (err.name === 'TimeoutError') return res.status(504).json({ error: 'Article took too long to load. Try again.' });
+    res.status(500).json({ error: 'Generation failed: ' + err.message });
+  }
 });
 
 // ── FALLBACK ──────────────────────────────────────────────────────────────────
