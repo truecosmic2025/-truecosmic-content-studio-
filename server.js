@@ -399,15 +399,57 @@ ${articleText.slice(0, 5000)}`;
 
   const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
 
-  let parsed;
-  try {
-    const clean = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-    parsed = JSON.parse(clean);
-  } catch(e) {
-    parsed = { title: articleTitle || 'Article', article: raw, tags: ['Law of Assumption', 'Neville Goddard', 'Manifestation', 'Spirituality', 'Personal Development'] };
+  const parsed = parseMediumResponse(raw, articleTitle);
+  return { ...parsed, imageUrl, sourceTitle: articleTitle };
+}
+
+// More forgiving than the frontend's parser: the model sometimes wraps the
+// JSON in ``` fences, adds text around it, or leaves quotes unescaped inside
+// "article". Headless runs have no human to untangle that, so recover what
+// we can instead of dumping the raw JSON into the article body.
+const MEDIUM_DEFAULT_TAGS = ['Law of Assumption', 'Neville Goddard', 'Manifestation', 'Spirituality', 'Personal Development'];
+
+function parseMediumResponse(raw, fallbackTitle) {
+  const tryParse = (s) => { try { return JSON.parse(s); } catch (e) { return null; } };
+  const unfence = (s) => String(s).replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+
+  let text = unfence(raw);
+  let obj = tryParse(text);
+  if (!obj) {
+    const a = text.indexOf('{'), b = text.lastIndexOf('}');
+    if (a !== -1 && b > a) obj = tryParse(text.slice(a, b + 1));
   }
 
-  return { ...parsed, imageUrl, sourceTitle: articleTitle };
+  // Last resort: pull the fields out by position (handles unescaped quotes in the article)
+  if (!obj) {
+    const t = text.match(/"title"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+    const tags = text.match(/"tags"\s*:\s*\[([^\]]*)\]/);
+    const art = text.match(/"article"\s*:\s*"([\s\S]*)"\s*,\s*"tags"/);
+    if (art) {
+      obj = {
+        title: t ? tryParse('"' + t[1] + '"') || t[1] : null,
+        article: art[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\'),
+        tags: tags ? (tryParse('[' + tags[1] + ']') || []) : [],
+      };
+    }
+  }
+
+  if (!obj || typeof obj !== 'object') {
+    return { title: String(fallbackTitle || 'Article').replace(/\s*[|–—-]\s*TrueCosmic\s*$/i, '').trim(), article: text, tags: MEDIUM_DEFAULT_TAGS, parseWarning: 'unparsed_model_output' };
+  }
+
+  // Nested case: "article" itself contains a fenced JSON object
+  if (typeof obj.article === 'string' && /^\s*(```|\{\s*"title")/.test(obj.article)) {
+    const inner = parseMediumResponse(obj.article, obj.title || fallbackTitle);
+    if (!inner.parseWarning) obj = { ...obj, ...inner };
+  }
+
+  const cleanTitle = (s) => (s ? String(s).replace(/\s*[|–—-]\s*TrueCosmic\s*$/i, '').trim() : s);
+  return {
+    title: cleanTitle(obj.title) || cleanTitle(fallbackTitle) || 'Article',
+    article: typeof obj.article === 'string' ? obj.article.trim() : text,
+    tags: Array.isArray(obj.tags) && obj.tags.length ? obj.tags.slice(0, 5) : MEDIUM_DEFAULT_TAGS,
+  };
 }
 
 app.post('/api/automation/medium-generate', requireAutomationKey, async (req, res) => {
@@ -448,6 +490,8 @@ app.post('/api/automation/medium-generate', requireAutomationKey, async (req, re
       article: result.article || '',
       tags: result.tags || [],
       imageUrl: result.imageUrl || null,
+      wordCount: (result.article || '').split(/\s+/).filter(Boolean).length,
+      parseWarning: result.parseWarning || null,
     });
   } catch (err) {
     console.error('automation/medium-generate error:', err.message);
